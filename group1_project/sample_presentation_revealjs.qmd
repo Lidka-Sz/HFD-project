@@ -1,0 +1,628 @@
+---
+title: "Quantitative strategies on High Frequency Data"
+subtitle: "Submission of research project -- Presentation"
+author: "Team members: Michał Budasz (439087) and Lidia Szmytkowska (474237)"
+date: 01/18/2026
+date-format: "MMM D, YYYY"
+format: html
+---
+# Assets from **group 1** (S&P500 and Nasdaq futures contracts)
+
+## Task outline and data presentation
+
+```{python}
+#|echo: false
+#|output: false
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+import quantstats as qs
+import statsmodels.api as sm
+import seaborn as sns
+from statsmodels.regression.rolling import RollingOLS
+from statsmodels.tsa.stattools import grangercausalitytests
+from arch.unitroot import ADF, PhillipsPerron, KPSS
+from sklearn.metrics import confusion_matrix
+import warnings
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=FutureWarning) 
+warnings.simplefilter(action="ignore", category=UserWarning)  
+warnings.simplefilter(action="ignore", category=RuntimeWarning)  
+
+from functions.plot_heatmap import plot_heatmap
+from functions.plot_positions import plot_positions_ma
+from functions.plot_positions import plot_positions_2mas
+from functions.plot_positions import plot_positions_vb
+
+
+import sys
+sys.path.append('functions')
+```
+
+Shortly about analyzed problem: The dataset consists of high-frequency, 1-minute intraday futures contracts quotations for Nasdaq (referred as NQ later on) and S&P500 (SP) indices, covering the period from January 2023 through June 2025 (7 quarters of in-sample data). Analysis was performed on agregated in-sample data (7 quarters), with proper NA's filling and filtering techinques.
+
+Description from project task concerning analyzed assets:
+- SP: futures contract for S&P 500 index (transaction cost = 12$, point value = 50$).
+- NQ: futures contract for NASDAQ index (transaction cost = 12$, point value = 20$).
+
+One has also remember about given assumptions for project task, that is developped strategies enforce strict intraday limits by closing all positions at 15:40 and avoiding execution before 9:55 each day, though data from (09:41 - 09:55) period is actively used for signal generation, volatility calibration and other calculation purposes.
+
+```{python}
+#|echo: false
+data1 = pd.read_pickle("output/data1_input.pkl")
+
+# Let's convert the datetime index to text and pass it as the x-axis
+data1_plot = data1.copy()
+
+data1_plot['time'] = data1_plot.index.astype(str)
+
+# Reset the index so that 'time' is a column
+data1_plot = data1_plot.reset_index(drop = True)
+
+# Visualization of data
+data1_plot.plot(
+    x = 'time',
+    subplots = True,
+    layout = (2, 1),
+    title = "Quotations of NQ and SP"
+)
+
+plt.show()
+```
+
+After some initial data exploration, one can see that these future contract are positively highly correlated to each other.
+
+```{python}
+#|echo: false
+data1_roll = pd.read_pickle("output/data1_roll.pkl")
+
+correlation_p = data1_roll['NQ'].corr(data1_roll['SP'])
+correlation_r = data1_roll['r_NQ'].corr(data1_roll['r_SP'])
+
+print("NQ and SP closing price correlation:")
+print(correlation_p) #very high positive correlation value!
+
+print("NQ and SP rate of returns correlation:")
+print(correlation_r)
+```
+
+However, it varies much across the whale agregated sample.
+
+```{python}
+#|echo: false
+# Let's see how correlation changes over time
+
+# Let's convert the datetime index to a text index and pass it as the x-axis
+data1_roll_plot = data1_roll.copy()
+data1_roll_plot['time'] = data1_roll_plot.index.astype(str)
+
+# Reset the index so that 'time' is a column
+data1_roll_plot = data1_roll_plot.reset_index(drop = True)
+
+# Let's draw the graph
+data1_roll_plot.plot(
+    x = 'time',
+    y = 'rollcorr120_NQ_SP',
+    title = "Rolling correlation of NQ and SP prices (120 minutes)",
+    figsize = (12, 6)
+)
+
+# let's add a reference line at the correlation level in the entire sample
+plt.axhline(y = correlation_p,
+            color = 'r',
+            linestyle = '--',
+            label = 'Correlation in the entire sample')
+
+plt.legend()
+plt.show()
+```
+
+Additionally, strong positive linear relationship can be observed.
+
+```{python}
+#|echo: false
+
+plt.figure(figsize=(8,6))
+plt.scatter(data1_roll["r_NQ"], data1_roll["r_SP"], alpha=0.5)
+plt.title("Scatter plot of returns of NQ and SP futures (Q1 2023)")
+plt.xlabel("NQ returns")
+plt.ylabel("SP returns")
+plt.grid()
+plt.show()
+```
+
+Bidirectional Granger causality is also detected in analyzed data, as the p-value of proper statistical tests is below given alpha=5% treshold level.
+
+```{python}
+#|echo: false
+
+data1_roll = data1_roll.iloc[400:, :]
+
+#Granger causality test
+print("We check if SP prices Granger-cause NQ prices")
+# second column is the causing variable
+granger_test = grangercausalitytests(data1_roll[["NQ", "SP"]], 
+                      # if we put maxlag = [10],
+                      # we test only for lag = 10
+                      maxlag = [10])
+print("\n")
+print("We check if NQ prices Granger-cause SP prices")
+granger_test = grangercausalitytests(data1_roll[["SP", "NQ"]], 
+                      maxlag = [10])
+
+# however, with 10 minute horizon we have bidirectional Granger causality!
+# (the null hypothesis of no causality is rejected at any significance level)
+```
+
+The main conclusion of abovementioned results is that linear regression based filtering techniques may be beneficial for computed strategies - it will be applied for pair trading strategy, developped alongside single moving averages, momentum and mean-reverting two intersecting moving averages and single moving average alongside selected volatility measures (so-called 'breakout models')
+
+## Approaches undertaken
+
+For this group of assets, author decided to focus on single asset-based strategies (and compare them with pair trading approach), specifically by applying following strategies:
+
+- Simple Moving Average (SMA)
+- Two intersecting Simple Moving Averages (2x SMA)
+- Two intersecting Exponential Moving Averages (2X EMA)
+- Volatility Breakout models, with different parameters approuaches.
+
+Each strategy was checked both with momentum-based and mean-reverting approach and author focused on analysis of **Nasdaq futures (NQ)** based strategies.
+
+One has also to remember additional assumption- asssuming that we can trade just with one unit of any security or spread, the positions available for each strategy (and implementent properly) are:
+
+- staying flat (0),
+- taking short position (-1),
+- taking long position (+1).
+
+### SMA(20)
+
+For this strategy of 20-minutes Simple Moving Average, both mean-revering and momentum based approach resulted in huge net loss of more than -433,000$ as many changes of signals resulted in incurring major transactional costs.
+
+```{python}
+#|echo: false
+data1 = pd.read_parquet("output/data1_entrymodels.parquet")
+
+# Let's plot the cumulative gross and net PnL for the MEAN-REVERTING 
+
+plt.figure(figsize=(12, 6))
+plt.plot(
+    data1_plot.index, 
+    np.cumsum(data1['pnl_gross1_mr']), 
+    color='blue', label='Gross PnL')
+plt.plot(
+    data1_plot.index, 
+    np.cumsum(data1['pnl_net1_mr']), 
+    color='red', label='Net PnL')
+plt.title("Cumulative PnL of the MEAN-REVERTING strategy")
+plt.legend()
+plt.grid()
+```
+
+```{python}
+#|echo: false
+
+# How about MOMENTUM strategy?
+
+plt.figure(figsize=(12, 6))
+plt.plot(
+    data1_plot.index, 
+    np.cumsum(data1['pnl_gross1_mom']), 
+    color='blue', label='Gross PnL')
+plt.plot(
+    data1_plot.index, 
+    np.cumsum(data1['pnl_net1_mom']), 
+    color='red', label='Net PnL')
+plt.title("Cumulative PnL of the MOMENTUM strategy")
+plt.legend()
+plt.grid()
+```
+
+Similar conclusions were drawn for strategy based on intersection of 2 SMAs.
+
+```{python}
+#|echo: false
+plot_positions_ma(
+    data_plot = data1, # DataFrame with DatetimeIndex
+    date_plot = '2024-05-01',      # Date as string 'YYYY-MM-DD'
+    col_price = 'NQ',      # column with price
+    col_ma = 'NQ_SMA20',   # column with moving average/median
+    col_pos = 'position1_mr',      # column with position (-1, 0, 1)
+    title = 'MEAN-REVERTING strategy activity for NQ 01/05/2024')
+```
+
+Therefore, additional imporvements and models were added.
+
+### 2x EMA: EMA60 + EMA30
+
+For this approach, two intersectional exponential moving averages (EMAs) were selcted, with such time horizons that they will cross each other and thus generate proper signals for strategy- several combinations were analyzed, but 'slower' EMA60 and 'faster' EMA30 perforemd the best.
+
+Still, major loss occurs- it is lower than in previous strategy and also points to potential advantage of **momentum-based** approach for analyzed problem.
+
+```{python}
+#|echo: false
+
+# let's draw the cumulative gross PnL for the MOMENTUM strategy
+
+plt.figure(figsize=(12, 6))
+plt.plot(
+    data1_plot.index, 
+    np.cumsum(data1['pnl_gross2a_mom']), 
+    color='blue', label='Gross PnL')
+plt.title("Cumulative gross PnL of the MOMENTUM strategy")
+plt.legend()
+plt.grid()
+
+```
+
+```{python}
+#|echo: false
+
+# let's draw the cumulative gross PnL for the MEAN-REVERTING strategy
+
+plt.figure(figsize=(12, 6))
+plt.plot(
+    data1_plot.index, 
+    np.cumsum(data1['pnl_gross2a_mr']), 
+    color='blue', label='Gross PnL')
+plt.title("Cumulative gross PnL of the MEAN-REVERTING strategy")
+plt.legend()
+plt.grid()
+
+```
+
+```{python}
+#|echo: false
+
+# Let's add the cumulative net PnL for the MOMENTUM strategy
+# (only this one was profitable in the gross sense)
+
+plt.figure(figsize=(12, 6))
+plt.plot(
+    data1_plot.index, 
+    np.cumsum(data1['pnl_gross2a_mom']), 
+    color='blue', label='Gross PnL')
+plt.plot(
+    data1_plot.index, 
+    np.cumsum(data1['pnl_net2a_mom']), 
+    color='red', label='Net PnL')
+plt.title("Cumulative PnL of the MOMENTUM strategy")
+plt.legend()
+plt.grid()
+
+```
+
+```{python}
+#|echo: false
+
+plot_positions_2mas(
+    data_plot=data1,
+    date_plot='2024-05-01',
+    col_price='NQ',
+    col_fma='NQ_EMA30',
+    col_sma='NQ_EMA60',
+    col_pos='position2a_mom',
+    title='MOMENTUM strategy 2MAs for NQ - 01/05/2024',
+    save_graph=False
+)
+
+```
+
+Therefore, additional imporvements and models were added.
+
+### Volatility Breakout models
+
+After that, volatility breakout (as a transformation of specific SMAs/EMAs with given variance treshold level) were analyzed. Main addditional parameters of theses models are assumed rolling window for variance (or other volatility metric) calculation indicating treshold level (in this project described ad 'std_vol' parameter) and treshold multiplier that indicates the volatility 'bounds' (in this project described as 'm' parameter)  
+
+Firstly, author picked and analyzed a model with such a configuration:
+
+- Approach: Momentum-based strategy
+- Base Moving Average: SMA60
+- Treshold level: standard deviation with 60-minutes memory (STD60)
+- Multiplier: m=3
+
+This model looks promising as it incurred lowest transactional cost level (12,936$) caused by less frequent change of signal sign.
+```{python}
+#|echo: false
+plt.figure(figsize=(12, 6))
+plt.plot(
+    data1_plot.index, 
+    np.cumsum(data1['pnl_gross4_mom']), 
+    color='blue', label='Gross PnL')
+plt.title("Cumulative gross PnL of the MOMENTUM strategy")
+plt.legend()
+plt.grid()
+```
+
+```{python}
+#|echo: false
+# the function requires referencing column names from the data frame
+
+# let's create these for col_lower and col_upper
+data1['NQ_VB_lower'] = (
+    data1['NQ_SMA60'] - 
+    data1['NQ_STD60'] * 3)
+
+data1['NQ_VB_upper'] = (
+    data1['NQ_SMA60'] +
+    data1['NQ_STD60'] * 3)
+
+# let's see the strategy activity for the selected day
+plot_positions_vb(
+    data_plot = data1, # DataFrame with DatetimeIndex
+    date_plot = '2024-05-01',      # Date as string 'YYYY-MM-DD'
+    col_signal = 'NQ',      # column with price
+    col_lower = 'NQ_VB_lower',  # lower threshold
+    col_upper = 'NQ_VB_upper',  # upper threshold
+    col_pos = 'position4_mom',     # column with position (-1, 0, 1)
+    title = 'VB MOMENTUM strategy activity for NQ 01/05/2024')
+
+```
+
+As this configuration is far from optimal, proper adjustments and calibrations of framework were added.
+
+```{python}
+#|echo: false
+# strategy 4
+data1['pnl_gross4_mom_pct'] = (
+    data1['pnl_gross4_mom'] /
+    data1['NQ'].shift(1))
+data1['pnl_net4_mom_pct'] = (
+    data1['pnl_net4_mom'] /
+    data1['NQ'].shift(1))
+data1['pnl_gross4_mr_pct'] = (
+    data1['pnl_gross4_mr'] /
+    data1['NQ'].shift(1))
+data1['pnl_net4_mr_pct'] = (
+    data1['pnl_net4_mr'] /
+    data1['NQ'].shift(1))
+
+returns_strategy = data1['pnl_gross4_mom_pct'].dropna()
+
+qs.plots.snapshot(returns_strategy, 
+                  title = "Snapshot of Volatility breakout strategy on NQ (gross)")
+
+sharpe = qs.stats.sharpe(returns_strategy)
+# values will be slightly different from calculations on minute data
+
+# alternative measures
+calmar = qs.stats.calmar(returns_strategy)
+sortino = qs.stats.sortino(returns_strategy)
+omega = qs.stats.omega(returns_strategy)
+
+print(f"Sharpe Ratio: {sharpe:.4f}")
+print(f"Calmar Ratio: {calmar:.4f}")
+print(f"Sortino Ratio: {sortino:.4f}")
+print(f"Omega Ratio: {omega:.4f}") 
+```
+
+For this purpose, various parameter combinations ('hyperparameters grid' of model) were tested iteratively in a loop, both for 2 intersecting EMAs and for Volatility Breakout models.
+
+For this purpose, data was splitted into 2 batchs: in-sample training period (that contains data for 2023-2024) and out-of-sample testing period (that contains data for 2024-2025). 
+
+Below we present the results of perfomed analysis.
+
+```{python}
+#|echo: false
+summary_all_breakout = pd.read_parquet("output/summary_all_breakout.parquet")
+summary_all_breakout_test = pd.read_parquet("output/summary_all_breakout_test.parquet")
+
+summary_all_breakout.sort_values(by = 'net_PnL_mom', 
+                                 ascending = False).head(10) 
+```
+
+For training period, volatility breakout model based on intersection of 2 EMAs ('fast' EMA10 + 'slow' EMA120), with 'volat_std'=120 and 'm'=2 parameters and momentum-based approach seems to achieve best result concerning such metrics as net P&L (value of +50,028$) and net Sharpe Ratio (level of 1,829). 
+To validate the results, proper analysis of test set was conducted.
+
+```{python}
+#|echo: false
+summary_all_breakout_test.sort_values(by = 'net_PnL_mom', 
+                                 ascending = False).head(20) 
+```
+
+In this case, different hyperparameters for momentum-based strategy achieve best net P&L value (at +59,833$ level), however previously selected in training period models seems to also perform well (15th place concerning net P&L level with +34,856$ while sustaining high net Sharpe Ratio value).
+
+As we can see from results below, momentum-based strategies perform better than the mean-reverting ones within analyzed framework, both concerning best training and (especially) testing models, with net profits at +26,832$ and -102,391$ (!) respectively. 
+
+```{python}
+#|echo: false
+summary_all_breakout.sort_values(by = 'net_PnL_mr', 
+                                 ascending = False).head(10) 
+```
+
+```{python}
+#|echo: false
+summary_all_breakout_test.sort_values(by = 'net_PnL_mr', 
+                                 ascending = False).head(20) 
+```
+
+To ascertain whether obtained results are good enough, comparison to pair-trading strategy will be conducted below.
+
+### Pair-trading strategy
+
+For this segment, spread between NQ-SP quotations was calculated and 2 separate strategies were conducted (on 'simple' spread value and the volatility breakout model that accounts for certain standard deviation of spread oscillation).
+
+As one can observe not favourable results in terms of net Sharpe Ratio (plot depics the value of models with different combinations, using previously developped grid search mechanism), we will focus more on author's improvements in terms of regression filtering.
+
+```{python}
+#|echo: false
+
+summary_all_NQ_SP=pd.read_parquet("output/summary_pair_SP_NQ.parquet")
+
+# net SR - spread av_ratio
+plot_heatmap(summary_all_NQ_SP,
+             value_col = "net_SR_avratio", 
+             index_col = "volat_sd", 
+             columns_col = "m", 
+             title = "Net SR (av_ratio) for SP-NQ Strategy")
+
+```
+
+
+```{python}
+#|echo: false
+
+# net Pnl - spread av_ratio
+plot_heatmap(summary_all_NQ_SP,
+             value_col = "net_PnL_avratio", 
+             index_col = "volat_sd", 
+             columns_col = "m", 
+             title = "Net PnL (av_ratio) for SP-NQ Strategy")
+```
+
+As stated at the data analysis section, additional filtering based on linear regression could be beneficial for such strategies- it is also confirmed by positive correlation between pair of analyzed assets.
+
+```{python}
+#|echo: false
+import statsmodels.api as sm
+
+# the OLS regression requires dropping NaN values
+summary_all_NQ_SP=pd.read_parquet("output/data_pair_SP_NQ.parquet")
+
+dataUSA_2_nonan = summary_all_NQ_SP.dropna(subset=["SP", "NQ", "r_SP", "r_NQ"])
+
+X = dataUSA_2_nonan["NQ"]
+y = dataUSA_2_nonan["SP"]
+X = sm.add_constant(X)  # adding a constant term for intercept
+model_ols = sm.OLS(y, X).fit()
+
+print(model_ols.summary())
+```
+
+Although proper filtering techniques based on linear regression greatly improve model performance regarding net SR (-0.75) and net P&L (-48$), these results are much worse than these obtained for Volatility Breakout model that trades only on single Nasdaq futures asset.
+
+```{python}
+#|echo: false
+results_filters_df=pd.read_parquet("output/summary_pair_SP_NQ_filtering.parquet")
+results_filters_df.sort_values(by = 'net_SR',
+                               ascending = False)
+
+```
+
+## Finally selected strategy for **group 1**
+
+Finally, after comparison of different models and 'hyperparameters' by manual grid search mechanizm, by evaluation of performance on training and testing set and by comparison to pair-trading NQ-SP strategy, the author considers below strategy as best performing:
+
+**Strategy: Volatility Breakout model**
+
+### Parameters of the best model
+
+- Asset: Nasdaq futures (single-asset based strategy)
+- Type: momentum-based strategy
+- Baseline: 2 intersecting EMAs (fast EMA10 + slow EMA120)
+- volat_std: 120
+- m: 2
+
+Below, author presents final results and metrics achieved by application of this strategy to full in-sample data.
+
+## Summary of results for **group 1**
+
+```{python}
+#| echo: false
+
+# import the csv file with strategy results
+summary_data1_all_quarters = pd.read_csv("output/summary_data1_all_quarters.csv")
+
+# Format the table
+numeric_cols = summary_data1_all_quarters.select_dtypes(include=['float', 'int']).columns
+
+styled_table = (
+    summary_data1_all_quarters.style
+    .format("{:.2f}", subset=numeric_cols)   # format numbers only
+    .set_properties(**{"text-align": "right"})  
+    .set_table_styles([
+        {"selector": "th", "props": [("font-size", "20px")]},
+        {"selector": "td", "props": [("font-size", "20px")]}
+    ])
+    .hide(axis = "index")   # << hides the index
+)
+styled_table
+```
+
+This table also shows the results of best-performing Volatility breakout model for S&P500 futures (with different hyperparameters and configuration, selected by applying same procedure) but it performs much worse- we'll omit the explanation of these results and focus on 'Nasdaq-based' strategy.
+
+From early 2023 through mid-2025, the net Sharpe ratio of the strategy remains mostly above 1.5 and frequently exceeds 2.0, indicating a high return per unit of risk. In particular, the first quarter of 2023 and the fourth quarter of 2023 show net Sharpe ratios above 2, confirming that the profitability observed in these periods is statistically meaningful rather than the result of random fluctuations.
+
+Transaction costs reduce performance, as expected, but they do not undermine the economic viability of the strategy. The gap between gross and net Sharpe ratios is moderate and stable across quarters, suggesting that the trading frequency is well-controlled. On average, the strategy executes between one and two trades per day, which is low enough to remain robust to realistic transaction costs while still actively exploiting intraday price movements.
+
+Net profit figures reinforce the Sharpe ratio results. The strategy produces positive net PnL in six out of seven quarters, with particularly strong profitability in 2023_Q1, 2023_Q4, 2025_Q1, and especially 2025_Q2. Even in weaker periods such as 2024_Q2, the strategy remains marginally profitable, indicating reduced opportunity rather than structural failure.
+
+Overall, the NASDAQ volatility breakout strategy exhibits robust and economically meaningful performance across multiple years, with high risk-adjusted returns, stable trading intensity, and strong profitability after transaction costs. Its primary weakness lies in its sensitivity to specific market regimes, particularly those unfavorable to momentum-based trading. Nevertheless, given its strong average performance and clear identification of failure regimes, the strategy provides a solid foundation for further refinement and risk-control enhancements, such as volatility filters or introduction of stop-loss mechanism.
+
+## Equity line for **group 1** -- 2023Q1
+
+```{python}
+#| echo: false
+#| out-width: 100%
+from IPython.display import Image
+Image(filename="strategy_NQ/data1_2023_Q1_NQ.png")
+```
+
+Key observations regarding performance (Strong Gain): net_PnL started flat, followed by a major "V-shaped" recovery in March. Finished with a Net PnL of ~$7,500.
+
+## Equity line for **group 1** -- 2023Q3
+
+```{python}
+#| echo: false
+#| out-width: 100%
+from IPython.display import Image
+Image(filename="strategy_NQ/data1_2023_Q3_NQ.png")
+```
+
+Key observations regarding performance (Moderate Gain): High volatility in July followed by a long plateau in August. Ended the quarter positively with a Net PnL of ~$3,300.
+
+## Equity line for **group 1** -- 2023Q4
+
+```{python}
+#| echo: false
+#| out-width: 100%
+from IPython.display import Image
+Image(filename="strategy_NQ/data1_2023_Q4_NQ.png")
+```
+
+Key observations regarding performance (Strong Late Surge): The strategy was largely breakeven for the first two months. A massive "parabolic" move in mid-December drove Net_PnL to ~$4,100 level
+
+
+## Equity line for **group 1** -- 2024Q2
+
+```{python}
+#| echo: false
+#| out-width: 100%
+from IPython.display import Image
+Image(filename="strategy_NQ/data1_2024_Q2_NQ.png")
+```
+
+Key observations regarding performance (Moderate Growth with Drawdown): The strategy showed steady growth through April and May, peaking at nearly $4,000 Net_PnL.
+However, warning signal in form of significant sharp drawdown occurred in late June, wiping out about 50% of the quarter’s gains, ending around $1,400 Net_PnL.
+
+## Equity line for **group 1** -- 2024Q4
+
+```{python}
+#| echo: false
+#| out-width: 100%
+from IPython.display import Image
+Image(filename="strategy_NQ/data1_2024_Q4_NQ.png")
+```
+
+Key observations regarding performance (Significant Loss): This was the worst-performing period in the set- after a brief positive start in early October, the strategy entered a sustained downward trend. Final Result: Finished deep 'in the red' with a Net_PnL of approx -$3,200.
+
+## Equity line for **group 1** -- 2025Q1
+
+```{python}
+#| echo: false
+#| out-width: 100%
+from IPython.display import Image
+Image(filename="strategy_NQ/data1_2025_Q1_NQ.png")
+```
+
+Key observations regarding performance ('High Risk, High Reward'): This quarter was characterized by massive swings. A major dip in February saw Net_PnL drop to $1,500 before a massive surge in March. Final Result: Despite a late March pullback, it ended strongly at approx $4,800 Net_PnL level
+
+## Equity line for **group 1** -- 2025Q2
+
+```{python}
+#| echo: false
+#| out-width: 100%
+from IPython.display import Image
+Image(filename="strategy_NQ/data1_2025_Q2_NQ.png")
+```
+
+Key observations regarding performance (Exceptional Growth) This is the "star" performer of the dataset. A massive jump in mid-April set a new baseline. The strategy showed excellent "step-stair" growth, meaning it would surge and then hold its gains (consolidate) rather than giving them back. Final Result: Ended at an all-time high for these charts, near $13,400 Net.

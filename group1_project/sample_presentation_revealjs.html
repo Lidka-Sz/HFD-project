@@ -1,0 +1,2499 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.25">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Team members: Michał Budasz (439087) and Lidia Szmytkowska (474237)">
+
+<title>Quantitative strategies on High Frequency Data</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="sample_presentation_revealjs_files/libs/clipboard/clipboard.min.js"></script>
+<script src="sample_presentation_revealjs_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="sample_presentation_revealjs_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="sample_presentation_revealjs_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="sample_presentation_revealjs_files/libs/quarto-html/popper.min.js"></script>
+<script src="sample_presentation_revealjs_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="sample_presentation_revealjs_files/libs/quarto-html/anchor.min.js"></script>
+<link href="sample_presentation_revealjs_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="sample_presentation_revealjs_files/libs/quarto-html/quarto-syntax-highlighting-7b89279ff1a6dce999919e0e67d4d9ec.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="sample_presentation_revealjs_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="sample_presentation_revealjs_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="sample_presentation_revealjs_files/libs/bootstrap/bootstrap-9e3ffae467580fdb927a41352e75a2e0.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Quantitative strategies on High Frequency Data</h1>
+<p class="subtitle lead">Submission of research project – Presentation</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Team members: Michał Budasz (439087) and Lidia Szmytkowska (474237) </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">Jan 18, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="assets-from-group-1-sp500-and-nasdaq-futures-contracts" class="level1">
+<h1>Assets from <strong>group 1</strong> (S&amp;P500 and Nasdaq futures contracts)</h1>
+<section id="task-outline-and-data-presentation" class="level2">
+<h2 class="anchored" data-anchor-id="task-outline-and-data-presentation">Task outline and data presentation</h2>
+<p>Shortly about analyzed problem: The dataset consists of high-frequency, 1-minute intraday futures contracts quotations for Nasdaq (referred as NQ later on) and S&amp;P500 (SP) indices, covering the period from January 2023 through June 2025 (7 quarters of in-sample data). Analysis was performed on agregated in-sample data (7 quarters), with proper NA’s filling and filtering techinques.</p>
+<p>Description from project task concerning analyzed assets: - SP: futures contract for S&amp;P 500 index (transaction cost = 12<span class="math inline">\(, point value = 50\)</span>). - NQ: futures contract for NASDAQ index (transaction cost = 12<span class="math inline">\(, point value = 20\)</span>).</p>
+<p>One has also remember about given assumptions for project task, that is developped strategies enforce strict intraday limits by closing all positions at 15:40 and avoiding execution before 9:55 each day, though data from (09:41 - 09:55) period is actively used for signal generation, volatility calibration and other calculation purposes.</p>
+<div id="5825bcb2" class="cell" data-execution_count="2">
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sample_presentation_revealjs_files/figure-html/cell-3-output-1.png" width="894" height="569" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>After some initial data exploration, one can see that these future contract are positively highly correlated to each other.</p>
+<div id="8e701b77" class="cell" data-execution_count="3">
+<div class="cell-output cell-output-stdout">
+<pre><code>NQ and SP closing price correlation:
+0.9879000942115326
+NQ and SP rate of returns correlation:
+0.8982203779015121</code></pre>
+</div>
+</div>
+<p>However, it varies much across the whale agregated sample.</p>
+<div id="4e1cc0b6" class="cell" data-execution_count="4">
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sample_presentation_revealjs_files/figure-html/cell-5-output-1.png" width="1029" height="533" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Additionally, strong positive linear relationship can be observed.</p>
+<div id="add97cab" class="cell" data-execution_count="5">
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sample_presentation_revealjs_files/figure-html/cell-6-output-1.png" width="687" height="533" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Bidirectional Granger causality is also detected in analyzed data, as the p-value of proper statistical tests is below given alpha=5% treshold level.</p>
+<div id="70f7d131" class="cell" data-execution_count="6">
+<div class="cell-output cell-output-stdout">
+<pre><code>We check if SP prices Granger-cause NQ prices
+
+Granger Causality
+number of lags (no zero) 10
+ssr based F test:         F=7.4874  , p=0.0000  , df_denom=175381, df_num=10
+ssr based chi2 test:   chi2=74.8829 , p=0.0000  , df=10
+likelihood ratio test: chi2=74.8669 , p=0.0000  , df=10
+parameter F test:         F=7.4874  , p=0.0000  , df_denom=175381, df_num=10
+
+
+We check if NQ prices Granger-cause SP prices
+
+Granger Causality
+number of lags (no zero) 10
+ssr based F test:         F=6.4759  , p=0.0000  , df_denom=175381, df_num=10
+ssr based chi2 test:   chi2=64.7668 , p=0.0000  , df=10
+likelihood ratio test: chi2=64.7549 , p=0.0000  , df=10
+parameter F test:         F=6.4759  , p=0.0000  , df_denom=175381, df_num=10</code></pre>
+</div>
+</div>
+<p>The main conclusion of abovementioned results is that linear regression based filtering techniques may be beneficial for computed strategies - it will be applied for pair trading strategy, developped alongside single moving averages, momentum and mean-reverting two intersecting moving averages and single moving average alongside selected volatility measures (so-called ‘breakout models’)</p>
+</section>
+<section id="approaches-undertaken" class="level2">
+<h2 class="anchored" data-anchor-id="approaches-undertaken">Approaches undertaken</h2>
+<p>For this group of assets, author decided to focus on single asset-based strategies (and compare them with pair trading approach), specifically by applying following strategies:</p>
+<ul>
+<li>Simple Moving Average (SMA)</li>
+<li>Two intersecting Simple Moving Averages (2x SMA)</li>
+<li>Two intersecting Exponential Moving Averages (2X EMA)</li>
+<li>Volatility Breakout models, with different parameters approuaches.</li>
+</ul>
+<p>Each strategy was checked both with momentum-based and mean-reverting approach and author focused on analysis of <strong>Nasdaq futures (NQ)</strong> based strategies.</p>
+<p>One has also to remember additional assumption- asssuming that we can trade just with one unit of any security or spread, the positions available for each strategy (and implementent properly) are:</p>
+<ul>
+<li>staying flat (0),</li>
+<li>taking short position (-1),</li>
+<li>taking long position (+1).</li>
+</ul>
+<section id="sma20" class="level3">
+<h3 class="anchored" data-anchor-id="sma20">SMA(20)</h3>
+<p>For this strategy of 20-minutes Simple Moving Average, both mean-revering and momentum based approach resulted in huge net loss of more than -433,000$ as many changes of signals resulted in incurring major transactional costs.</p>
+<div id="72b0347d" class="cell" data-execution_count="7">
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sample_presentation_revealjs_files/figure-html/cell-8-output-1.png" width="988" height="511" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="f2bf09bd" class="cell" data-execution_count="8">
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sample_presentation_revealjs_files/figure-html/cell-9-output-1.png" width="988" height="511" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Similar conclusions were drawn for strategy based on intersection of 2 SMAs.</p>
+<div id="67d2fa85" class="cell" data-execution_count="9">
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sample_presentation_revealjs_files/figure-html/cell-10-output-1.png" width="940" height="554" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Therefore, additional imporvements and models were added.</p>
+</section>
+<section id="x-ema-ema60-ema30" class="level3">
+<h3 class="anchored" data-anchor-id="x-ema-ema60-ema30">2x EMA: EMA60 + EMA30</h3>
+<p>For this approach, two intersectional exponential moving averages (EMAs) were selcted, with such time horizons that they will cross each other and thus generate proper signals for strategy- several combinations were analyzed, but ‘slower’ EMA60 and ‘faster’ EMA30 perforemd the best.</p>
+<p>Still, major loss occurs- it is lower than in previous strategy and also points to potential advantage of <strong>momentum-based</strong> approach for analyzed problem.</p>
+<div id="8e6ea1ef" class="cell" data-execution_count="10">
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sample_presentation_revealjs_files/figure-html/cell-11-output-1.png" width="970" height="511" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="065b44d9" class="cell" data-execution_count="11">
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sample_presentation_revealjs_files/figure-html/cell-12-output-1.png" width="970" height="511" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="b69b18c4" class="cell" data-execution_count="12">
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sample_presentation_revealjs_files/figure-html/cell-13-output-1.png" width="979" height="511" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="ec614f83" class="cell" data-execution_count="13">
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sample_presentation_revealjs_files/figure-html/cell-14-output-1.png" width="940" height="554" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Therefore, additional imporvements and models were added.</p>
+</section>
+<section id="volatility-breakout-models" class="level3">
+<h3 class="anchored" data-anchor-id="volatility-breakout-models">Volatility Breakout models</h3>
+<p>After that, volatility breakout (as a transformation of specific SMAs/EMAs with given variance treshold level) were analyzed. Main addditional parameters of theses models are assumed rolling window for variance (or other volatility metric) calculation indicating treshold level (in this project described ad ‘std_vol’ parameter) and treshold multiplier that indicates the volatility ‘bounds’ (in this project described as ‘m’ parameter)</p>
+<p>Firstly, author picked and analyzed a model with such a configuration:</p>
+<ul>
+<li>Approach: Momentum-based strategy</li>
+<li>Base Moving Average: SMA60</li>
+<li>Treshold level: standard deviation with 60-minutes memory (STD60)</li>
+<li>Multiplier: m=3</li>
+</ul>
+<p>This model looks promising as it incurred lowest transactional cost level (12,936$) caused by less frequent change of signal sign.</p>
+<div id="072d5b8f" class="cell" data-execution_count="14">
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sample_presentation_revealjs_files/figure-html/cell-15-output-1.png" width="961" height="511" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="95456ea0" class="cell" data-execution_count="15">
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sample_presentation_revealjs_files/figure-html/cell-16-output-1.png" width="940" height="554" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>As this configuration is far from optimal, proper adjustments and calibrations of framework were added.</p>
+<div id="2bf29c81" class="cell" data-execution_count="16">
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sample_presentation_revealjs_files/figure-html/cell-17-output-1.png" width="949" height="745" class="figure-img"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Sharpe Ratio: 0.1014
+Calmar Ratio: 0.0083
+Sortino Ratio: 0.1495
+Omega Ratio: 1.0325</code></pre>
+</div>
+</div>
+<p>For this purpose, various parameter combinations (‘hyperparameters grid’ of model) were tested iteratively in a loop, both for 2 intersecting EMAs and for Volatility Breakout models.</p>
+<p>For this purpose, data was splitted into 2 batchs: in-sample training period (that contains data for 2023-2024) and out-of-sample testing period (that contains data for 2024-2025).</p>
+<p>Below we present the results of perfomed analysis.</p>
+<div id="e5413139" class="cell" data-execution_count="17">
+<div class="cell-output cell-output-display" data-execution_count="17">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">signalEMA</th>
+<th data-quarto-table-cell-role="th">slowEMA</th>
+<th data-quarto-table-cell-role="th">volat_sd</th>
+<th data-quarto-table-cell-role="th">m</th>
+<th data-quarto-table-cell-role="th">period</th>
+<th data-quarto-table-cell-role="th">gross_SR_mom</th>
+<th data-quarto-table-cell-role="th">net_SR_mom</th>
+<th data-quarto-table-cell-role="th">gross_PnL_mom</th>
+<th data-quarto-table-cell-role="th">net_PnL_mom</th>
+<th data-quarto-table-cell-role="th">gross_SR_mr</th>
+<th data-quarto-table-cell-role="th">net_SR_mr</th>
+<th data-quarto-table-cell-role="th">gross_PnL_mr</th>
+<th data-quarto-table-cell-role="th">net_PnL_mr</th>
+<th data-quarto-table-cell-role="th">av_daily_ntrans</th>
+<th data-quarto-table-cell-role="th">signalEMA_slowEMA</th>
+<th data-quarto-table-cell-role="th">volat_sd_m</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">25</th>
+<td>10</td>
+<td>120</td>
+<td>120</td>
+<td>2</td>
+<td>2023-2024</td>
+<td>2.012353</td>
+<td>1.828681</td>
+<td>55044.08</td>
+<td>50028.08</td>
+<td>-2.012353</td>
+<td>-2.195836</td>
+<td>-55044.08</td>
+<td>-60060.08</td>
+<td>1.290123</td>
+<td>010_120</td>
+<td>120_2</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">147</th>
+<td>20</td>
+<td>60</td>
+<td>90</td>
+<td>1</td>
+<td>2023-2024</td>
+<td>1.828984</td>
+<td>1.663058</td>
+<td>50822.34</td>
+<td>46238.34</td>
+<td>-1.828984</td>
+<td>-1.994874</td>
+<td>-50822.34</td>
+<td>-55406.34</td>
+<td>1.179012</td>
+<td>020_060</td>
+<td>090_1</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">52</th>
+<td>10</td>
+<td>200</td>
+<td>120</td>
+<td>2</td>
+<td>2023-2024</td>
+<td>1.519710</td>
+<td>1.296177</td>
+<td>51175.16</td>
+<td>43711.16</td>
+<td>-1.519710</td>
+<td>-1.743799</td>
+<td>-51175.16</td>
+<td>-58639.16</td>
+<td>1.919753</td>
+<td>010_200</td>
+<td>120_2</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">207</th>
+<td>20</td>
+<td>300</td>
+<td>60</td>
+<td>1</td>
+<td>2023-2024</td>
+<td>1.281095</td>
+<td>0.982590</td>
+<td>54990.40</td>
+<td>42414.40</td>
+<td>-1.281095</td>
+<td>-1.582908</td>
+<td>-54990.40</td>
+<td>-67566.40</td>
+<td>3.234568</td>
+<td>020_300</td>
+<td>060_1</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">81</th>
+<td>15</td>
+<td>90</td>
+<td>60</td>
+<td>1</td>
+<td>2023-2024</td>
+<td>1.415303</td>
+<td>1.028515</td>
+<td>57902.00</td>
+<td>42350.00</td>
+<td>-1.415303</td>
+<td>-1.807014</td>
+<td>-57902.00</td>
+<td>-73454.00</td>
+<td>4.000000</td>
+<td>015_090</td>
+<td>060_1</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">34</th>
+<td>10</td>
+<td>150</td>
+<td>120</td>
+<td>2</td>
+<td>2023-2024</td>
+<td>1.704335</td>
+<td>1.476219</td>
+<td>48545.26</td>
+<td>42089.26</td>
+<td>-1.704335</td>
+<td>-1.932716</td>
+<td>-48545.26</td>
+<td>-55001.26</td>
+<td>1.660494</td>
+<td>010_150</td>
+<td>120_2</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">22</th>
+<td>10</td>
+<td>120</td>
+<td>90</td>
+<td>2</td>
+<td>2023-2024</td>
+<td>1.480509</td>
+<td>1.259104</td>
+<td>47779.08</td>
+<td>40699.08</td>
+<td>-1.480509</td>
+<td>-1.702501</td>
+<td>-47779.08</td>
+<td>-54859.08</td>
+<td>1.820988</td>
+<td>010_120</td>
+<td>090_2</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">231</th>
+<td>30</td>
+<td>90</td>
+<td>120</td>
+<td>1</td>
+<td>2023-2024</td>
+<td>1.959921</td>
+<td>1.793708</td>
+<td>43833.90</td>
+<td>40089.90</td>
+<td>-1.959921</td>
+<td>-2.125605</td>
+<td>-43833.90</td>
+<td>-47577.90</td>
+<td>0.962963</td>
+<td>030_090</td>
+<td>120_1</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">282</th>
+<td>30</td>
+<td>300</td>
+<td>90</td>
+<td>1</td>
+<td>2023-2024</td>
+<td>1.255161</td>
+<td>0.989408</td>
+<td>50363.28</td>
+<td>39851.28</td>
+<td>-1.255161</td>
+<td>-1.522907</td>
+<td>-50363.28</td>
+<td>-60875.28</td>
+<td>2.703704</td>
+<td>030_300</td>
+<td>090_1</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">153</th>
+<td>20</td>
+<td>90</td>
+<td>60</td>
+<td>1</td>
+<td>2023-2024</td>
+<td>1.297734</td>
+<td>0.964195</td>
+<td>53316.28</td>
+<td>39828.28</td>
+<td>-1.297734</td>
+<td>-1.634828</td>
+<td>-53316.28</td>
+<td>-66804.28</td>
+<td>3.469136</td>
+<td>020_090</td>
+<td>060_1</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>For training period, volatility breakout model based on intersection of 2 EMAs (‘fast’ EMA10 + ‘slow’ EMA120), with ‘volat_std’=120 and ‘m’=2 parameters and momentum-based approach seems to achieve best result concerning such metrics as net P&amp;L (value of +50,028$) and net Sharpe Ratio (level of 1,829). To validate the results, proper analysis of test set was conducted.</p>
+<div id="1700d536" class="cell" data-execution_count="18">
+<div class="cell-output cell-output-display" data-execution_count="18">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">signalEMA</th>
+<th data-quarto-table-cell-role="th">slowEMA</th>
+<th data-quarto-table-cell-role="th">volat_sd</th>
+<th data-quarto-table-cell-role="th">m</th>
+<th data-quarto-table-cell-role="th">period</th>
+<th data-quarto-table-cell-role="th">gross_SR_mom</th>
+<th data-quarto-table-cell-role="th">net_SR_mom</th>
+<th data-quarto-table-cell-role="th">gross_PnL_mom</th>
+<th data-quarto-table-cell-role="th">net_PnL_mom</th>
+<th data-quarto-table-cell-role="th">gross_SR_mr</th>
+<th data-quarto-table-cell-role="th">net_SR_mr</th>
+<th data-quarto-table-cell-role="th">gross_PnL_mr</th>
+<th data-quarto-table-cell-role="th">net_PnL_mr</th>
+<th data-quarto-table-cell-role="th">av_daily_ntrans</th>
+<th data-quarto-table-cell-role="th">signalEMA_slowEMA</th>
+<th data-quarto-table-cell-role="th">volat_sd_m</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">75</th>
+<td>15</td>
+<td>60</td>
+<td>90</td>
+<td>1</td>
+<td>2025</td>
+<td>2.556297</td>
+<td>2.391585</td>
+<td>63841.72</td>
+<td>59833.72</td>
+<td>-2.556297</td>
+<td>-2.721540</td>
+<td>-63841.72</td>
+<td>-67849.72</td>
+<td>2.609375</td>
+<td>015_060</td>
+<td>090_1</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">3</th>
+<td>10</td>
+<td>60</td>
+<td>90</td>
+<td>1</td>
+<td>2025</td>
+<td>1.714759</td>
+<td>1.534066</td>
+<td>60142.44</td>
+<td>53926.44</td>
+<td>-1.714759</td>
+<td>-1.896239</td>
+<td>-60142.44</td>
+<td>-66358.44</td>
+<td>4.046875</td>
+<td>010_060</td>
+<td>090_1</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">78</th>
+<td>15</td>
+<td>60</td>
+<td>120</td>
+<td>1</td>
+<td>2025</td>
+<td>1.955306</td>
+<td>1.840801</td>
+<td>55010.94</td>
+<td>51818.94</td>
+<td>-1.955306</td>
+<td>-2.069917</td>
+<td>-55010.94</td>
+<td>-58202.94</td>
+<td>2.078125</td>
+<td>015_060</td>
+<td>120_1</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">159</th>
+<td>20</td>
+<td>90</td>
+<td>120</td>
+<td>1</td>
+<td>2025</td>
+<td>1.807509</td>
+<td>1.683198</td>
+<td>51534.38</td>
+<td>48030.38</td>
+<td>-1.807509</td>
+<td>-1.932009</td>
+<td>-51534.38</td>
+<td>-55038.38</td>
+<td>2.281250</td>
+<td>020_090</td>
+<td>120_1</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>10</td>
+<td>60</td>
+<td>60</td>
+<td>1</td>
+<td>2025</td>
+<td>1.766997</td>
+<td>1.514506</td>
+<td>54299.62</td>
+<td>46667.62</td>
+<td>-1.766997</td>
+<td>-2.020815</td>
+<td>-54299.62</td>
+<td>-61931.62</td>
+<td>4.968750</td>
+<td>010_060</td>
+<td>060_1</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">15</th>
+<td>10</td>
+<td>90</td>
+<td>120</td>
+<td>1</td>
+<td>2025</td>
+<td>1.596600</td>
+<td>1.427139</td>
+<td>52056.40</td>
+<td>46632.40</td>
+<td>-1.596600</td>
+<td>-1.766770</td>
+<td>-52056.40</td>
+<td>-57480.40</td>
+<td>3.531250</td>
+<td>010_090</td>
+<td>120_1</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">87</th>
+<td>15</td>
+<td>90</td>
+<td>120</td>
+<td>1</td>
+<td>2025</td>
+<td>1.623616</td>
+<td>1.478711</td>
+<td>50929.20</td>
+<td>46465.20</td>
+<td>-1.623616</td>
+<td>-1.769007</td>
+<td>-50929.20</td>
+<td>-55393.20</td>
+<td>2.906250</td>
+<td>015_090</td>
+<td>120_1</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">93</th>
+<td>15</td>
+<td>120</td>
+<td>90</td>
+<td>1</td>
+<td>2025</td>
+<td>1.424008</td>
+<td>1.261928</td>
+<td>48051.04</td>
+<td>42675.04</td>
+<td>-1.424008</td>
+<td>-1.586777</td>
+<td>-48051.04</td>
+<td>-53427.04</td>
+<td>3.500000</td>
+<td>015_120</td>
+<td>090_1</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">84</th>
+<td>15</td>
+<td>90</td>
+<td>90</td>
+<td>1</td>
+<td>2025</td>
+<td>1.312090</td>
+<td>1.152588</td>
+<td>44064.70</td>
+<td>38784.70</td>
+<td>-1.312090</td>
+<td>-1.472206</td>
+<td>-44064.70</td>
+<td>-49344.70</td>
+<td>3.437500</td>
+<td>015_090</td>
+<td>090_1</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">12</th>
+<td>10</td>
+<td>90</td>
+<td>90</td>
+<td>1</td>
+<td>2025</td>
+<td>1.230013</td>
+<td>1.038662</td>
+<td>43011.50</td>
+<td>36411.50</td>
+<td>-1.230013</td>
+<td>-1.422303</td>
+<td>-43011.50</td>
+<td>-49611.50</td>
+<td>4.296875</td>
+<td>010_090</td>
+<td>090_1</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">231</th>
+<td>30</td>
+<td>90</td>
+<td>120</td>
+<td>1</td>
+<td>2025</td>
+<td>2.514517</td>
+<td>2.421501</td>
+<td>37216.98</td>
+<td>35800.98</td>
+<td>-2.514517</td>
+<td>-2.607223</td>
+<td>-37216.98</td>
+<td>-38632.98</td>
+<td>0.921875</td>
+<td>030_090</td>
+<td>120_1</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">150</th>
+<td>20</td>
+<td>60</td>
+<td>120</td>
+<td>1</td>
+<td>2025</td>
+<td>2.056840</td>
+<td>1.985746</td>
+<td>36795.06</td>
+<td>35499.06</td>
+<td>-2.056840</td>
+<td>-2.127774</td>
+<td>-36795.06</td>
+<td>-38091.06</td>
+<td>0.843750</td>
+<td>020_060</td>
+<td>120_1</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">97</th>
+<td>15</td>
+<td>120</td>
+<td>120</td>
+<td>2</td>
+<td>2025</td>
+<td>2.532707</td>
+<td>2.472637</td>
+<td>36216.02</td>
+<td>35304.02</td>
+<td>-2.532707</td>
+<td>-2.592503</td>
+<td>-36216.02</td>
+<td>-37128.02</td>
+<td>0.593750</td>
+<td>015_120</td>
+<td>120_2</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">106</th>
+<td>15</td>
+<td>150</td>
+<td>120</td>
+<td>2</td>
+<td>2025</td>
+<td>2.337198</td>
+<td>2.236598</td>
+<td>36667.72</td>
+<td>35059.72</td>
+<td>-2.337198</td>
+<td>-2.437537</td>
+<td>-36667.72</td>
+<td>-38275.72</td>
+<td>1.046875</td>
+<td>015_150</td>
+<td>120_2</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">21</th>
+<td>10</td>
+<td>120</td>
+<td>90</td>
+<td>1</td>
+<td>2025</td>
+<td>1.184355</td>
+<td>1.003127</td>
+<td>41048.14</td>
+<td>34856.14</td>
+<td>-1.184355</td>
+<td>-1.366491</td>
+<td>-41048.14</td>
+<td>-47240.14</td>
+<td>4.031250</td>
+<td>010_120</td>
+<td>090_1</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">6</th>
+<td>10</td>
+<td>60</td>
+<td>120</td>
+<td>1</td>
+<td>2025</td>
+<td>1.289485</td>
+<td>1.114385</td>
+<td>38339.34</td>
+<td>33203.34</td>
+<td>-1.289485</td>
+<td>-1.465302</td>
+<td>-38339.34</td>
+<td>-43475.34</td>
+<td>3.343750</td>
+<td>010_060</td>
+<td>120_1</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">16</th>
+<td>10</td>
+<td>90</td>
+<td>120</td>
+<td>2</td>
+<td>2025</td>
+<td>1.850523</td>
+<td>1.800981</td>
+<td>31197.06</td>
+<td>30333.06</td>
+<td>-1.850523</td>
+<td>-1.899921</td>
+<td>-31197.06</td>
+<td>-32061.06</td>
+<td>0.562500</td>
+<td>010_090</td>
+<td>120_2</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">25</th>
+<td>10</td>
+<td>120</td>
+<td>120</td>
+<td>2</td>
+<td>2025</td>
+<td>1.650823</td>
+<td>1.553279</td>
+<td>31131.22</td>
+<td>29283.22</td>
+<td>-1.650823</td>
+<td>-1.748264</td>
+<td>-31131.22</td>
+<td>-32979.22</td>
+<td>1.203125</td>
+<td>010_120</td>
+<td>120_2</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">234</th>
+<td>30</td>
+<td>120</td>
+<td>60</td>
+<td>1</td>
+<td>2025</td>
+<td>1.086886</td>
+<td>0.938610</td>
+<td>33641.92</td>
+<td>29105.92</td>
+<td>-1.086886</td>
+<td>-1.235695</td>
+<td>-33641.92</td>
+<td>-38177.92</td>
+<td>2.953125</td>
+<td>030_120</td>
+<td>060_1</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">13</th>
+<td>10</td>
+<td>90</td>
+<td>90</td>
+<td>2</td>
+<td>2025</td>
+<td>1.800711</td>
+<td>1.716930</td>
+<td>29522.90</td>
+<td>28130.90</td>
+<td>-1.800711</td>
+<td>-1.884311</td>
+<td>-29522.90</td>
+<td>-30914.90</td>
+<td>0.906250</td>
+<td>010_090</td>
+<td>090_2</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>In this case, different hyperparameters for momentum-based strategy achieve best net P&amp;L value (at +59,833$ level), however previously selected in training period models seems to also perform well (15th place concerning net P&amp;L level with +34,856$ while sustaining high net Sharpe Ratio value).</p>
+<p>As we can see from results below, momentum-based strategies perform better than the mean-reverting ones within analyzed framework, both concerning best training and (especially) testing models, with net profits at +26,832$ and -102,391$ (!) respectively.</p>
+<div id="33e40d0d" class="cell" data-execution_count="19">
+<div class="cell-output cell-output-display" data-execution_count="19">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">signalEMA</th>
+<th data-quarto-table-cell-role="th">slowEMA</th>
+<th data-quarto-table-cell-role="th">volat_sd</th>
+<th data-quarto-table-cell-role="th">m</th>
+<th data-quarto-table-cell-role="th">period</th>
+<th data-quarto-table-cell-role="th">gross_SR_mom</th>
+<th data-quarto-table-cell-role="th">net_SR_mom</th>
+<th data-quarto-table-cell-role="th">gross_PnL_mom</th>
+<th data-quarto-table-cell-role="th">net_PnL_mom</th>
+<th data-quarto-table-cell-role="th">gross_SR_mr</th>
+<th data-quarto-table-cell-role="th">net_SR_mr</th>
+<th data-quarto-table-cell-role="th">gross_PnL_mr</th>
+<th data-quarto-table-cell-role="th">net_PnL_mr</th>
+<th data-quarto-table-cell-role="th">av_daily_ntrans</th>
+<th data-quarto-table-cell-role="th">signalEMA_slowEMA</th>
+<th data-quarto-table-cell-role="th">volat_sd_m</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">504</th>
+<td>90</td>
+<td>60</td>
+<td>60</td>
+<td>1</td>
+<td>2023-2024</td>
+<td>-1.268553</td>
+<td>-1.461137</td>
+<td>-31632.00</td>
+<td>-36432.00</td>
+<td>1.268553</td>
+<td>1.075822</td>
+<td>31632.00</td>
+<td>26832.00</td>
+<td>1.234568</td>
+<td>090_060</td>
+<td>060_1</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">318</th>
+<td>45</td>
+<td>150</td>
+<td>90</td>
+<td>1</td>
+<td>2023-2024</td>
+<td>-0.563220</td>
+<td>-0.808853</td>
+<td>-20717.94</td>
+<td>-29861.94</td>
+<td>0.563220</td>
+<td>0.315779</td>
+<td>20717.94</td>
+<td>11573.94</td>
+<td>2.351852</td>
+<td>045_150</td>
+<td>090_1</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">434</th>
+<td>75</td>
+<td>60</td>
+<td>60</td>
+<td>3</td>
+<td>2023-2024</td>
+<td>-0.897195</td>
+<td>-1.037670</td>
+<td>-12633.88</td>
+<td>-14625.88</td>
+<td>0.897195</td>
+<td>0.756154</td>
+<td>12633.88</td>
+<td>10641.88</td>
+<td>0.512346</td>
+<td>075_060</td>
+<td>060_3</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">433</th>
+<td>75</td>
+<td>60</td>
+<td>60</td>
+<td>2</td>
+<td>2023-2024</td>
+<td>-0.866767</td>
+<td>-1.010897</td>
+<td>-12213.66</td>
+<td>-14253.66</td>
+<td>0.866767</td>
+<td>0.722160</td>
+<td>12213.66</td>
+<td>10173.66</td>
+<td>0.524691</td>
+<td>075_060</td>
+<td>060_2</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">438</th>
+<td>75</td>
+<td>60</td>
+<td>120</td>
+<td>1</td>
+<td>2023-2024</td>
+<td>-1.183850</td>
+<td>-1.269630</td>
+<td>-10335.00</td>
+<td>-11127.00</td>
+<td>1.183850</td>
+<td>1.097103</td>
+<td>10335.00</td>
+<td>9543.00</td>
+<td>0.203704</td>
+<td>075_060</td>
+<td>120_1</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">511</th>
+<td>90</td>
+<td>60</td>
+<td>120</td>
+<td>2</td>
+<td>2023-2024</td>
+<td>-1.183850</td>
+<td>-1.269630</td>
+<td>-10335.00</td>
+<td>-11127.00</td>
+<td>1.183850</td>
+<td>1.097103</td>
+<td>10335.00</td>
+<td>9543.00</td>
+<td>0.203704</td>
+<td>090_060</td>
+<td>120_2</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">510</th>
+<td>90</td>
+<td>60</td>
+<td>120</td>
+<td>1</td>
+<td>2023-2024</td>
+<td>-1.183850</td>
+<td>-1.272380</td>
+<td>-10335.00</td>
+<td>-11151.00</td>
+<td>1.183850</td>
+<td>1.094326</td>
+<td>10335.00</td>
+<td>9519.00</td>
+<td>0.209877</td>
+<td>090_060</td>
+<td>120_1</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">512</th>
+<td>90</td>
+<td>60</td>
+<td>120</td>
+<td>3</td>
+<td>2023-2024</td>
+<td>-1.170149</td>
+<td>-1.256185</td>
+<td>-10197.56</td>
+<td>-10989.56</td>
+<td>1.170149</td>
+<td>1.083152</td>
+<td>10197.56</td>
+<td>9405.56</td>
+<td>0.203704</td>
+<td>090_060</td>
+<td>120_3</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">437</th>
+<td>75</td>
+<td>60</td>
+<td>90</td>
+<td>3</td>
+<td>2023-2024</td>
+<td>-1.175061</td>
+<td>-1.268719</td>
+<td>-10246.36</td>
+<td>-11110.36</td>
+<td>1.175061</td>
+<td>1.080263</td>
+<td>10246.36</td>
+<td>9382.36</td>
+<td>0.222222</td>
+<td>075_060</td>
+<td>090_3</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">435</th>
+<td>75</td>
+<td>60</td>
+<td>90</td>
+<td>1</td>
+<td>2023-2024</td>
+<td>-1.175061</td>
+<td>-1.268719</td>
+<td>-10246.36</td>
+<td>-11110.36</td>
+<td>1.175061</td>
+<td>1.080263</td>
+<td>10246.36</td>
+<td>9382.36</td>
+<td>0.222222</td>
+<td>075_060</td>
+<td>090_1</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div id="0d458f6f" class="cell" data-execution_count="20">
+<div class="cell-output cell-output-display" data-execution_count="20">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">signalEMA</th>
+<th data-quarto-table-cell-role="th">slowEMA</th>
+<th data-quarto-table-cell-role="th">volat_sd</th>
+<th data-quarto-table-cell-role="th">m</th>
+<th data-quarto-table-cell-role="th">period</th>
+<th data-quarto-table-cell-role="th">gross_SR_mom</th>
+<th data-quarto-table-cell-role="th">net_SR_mom</th>
+<th data-quarto-table-cell-role="th">gross_PnL_mom</th>
+<th data-quarto-table-cell-role="th">net_PnL_mom</th>
+<th data-quarto-table-cell-role="th">gross_SR_mr</th>
+<th data-quarto-table-cell-role="th">net_SR_mr</th>
+<th data-quarto-table-cell-role="th">gross_PnL_mr</th>
+<th data-quarto-table-cell-role="th">net_PnL_mr</th>
+<th data-quarto-table-cell-role="th">av_daily_ntrans</th>
+<th data-quarto-table-cell-role="th">signalEMA_slowEMA</th>
+<th data-quarto-table-cell-role="th">volat_sd_m</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">558</th>
+<td>90</td>
+<td>240</td>
+<td>60</td>
+<td>1</td>
+<td>2025</td>
+<td>-3.028774</td>
+<td>-3.145933</td>
+<td>-98383.88</td>
+<td>-102391.88</td>
+<td>3.028774</td>
+<td>2.911132</td>
+<td>98383.88</td>
+<td>94375.88</td>
+<td>2.609375</td>
+<td>090_240</td>
+<td>060_1</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">570</th>
+<td>90</td>
+<td>300</td>
+<td>90</td>
+<td>1</td>
+<td>2025</td>
+<td>-2.965781</td>
+<td>-3.078631</td>
+<td>-93438.36</td>
+<td>-97134.36</td>
+<td>2.965781</td>
+<td>2.852589</td>
+<td>93438.36</td>
+<td>89742.36</td>
+<td>2.406250</td>
+<td>090_300</td>
+<td>090_1</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">426</th>
+<td>60</td>
+<td>300</td>
+<td>90</td>
+<td>1</td>
+<td>2025</td>
+<td>-2.828114</td>
+<td>-2.940465</td>
+<td>-93304.50</td>
+<td>-97192.50</td>
+<td>2.828114</td>
+<td>2.715331</td>
+<td>93304.50</td>
+<td>89416.50</td>
+<td>2.531250</td>
+<td>060_300</td>
+<td>090_1</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">486</th>
+<td>75</td>
+<td>240</td>
+<td>60</td>
+<td>1</td>
+<td>2025</td>
+<td>-2.659679</td>
+<td>-2.775799</td>
+<td>-90705.44</td>
+<td>-94857.44</td>
+<td>2.659679</td>
+<td>2.543072</td>
+<td>90705.44</td>
+<td>86553.44</td>
+<td>2.703125</td>
+<td>075_240</td>
+<td>060_1</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">352</th>
+<td>45</td>
+<td>300</td>
+<td>60</td>
+<td>2</td>
+<td>2025</td>
+<td>-2.630727</td>
+<td>-2.738901</td>
+<td>-85869.16</td>
+<td>-89541.16</td>
+<td>2.630727</td>
+<td>2.522197</td>
+<td>85869.16</td>
+<td>82197.16</td>
+<td>2.390625</td>
+<td>045_300</td>
+<td>060_2</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">280</th>
+<td>30</td>
+<td>300</td>
+<td>60</td>
+<td>2</td>
+<td>2025</td>
+<td>-2.453023</td>
+<td>-2.561377</td>
+<td>-81753.36</td>
+<td>-85497.36</td>
+<td>2.453023</td>
+<td>2.344319</td>
+<td>81753.36</td>
+<td>78009.36</td>
+<td>2.437500</td>
+<td>030_300</td>
+<td>060_2</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">208</th>
+<td>20</td>
+<td>300</td>
+<td>60</td>
+<td>2</td>
+<td>2025</td>
+<td>-2.372184</td>
+<td>-2.482116</td>
+<td>-80120.34</td>
+<td>-83960.34</td>
+<td>2.372184</td>
+<td>2.261907</td>
+<td>80120.34</td>
+<td>76280.34</td>
+<td>2.500000</td>
+<td>020_300</td>
+<td>060_2</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">495</th>
+<td>75</td>
+<td>300</td>
+<td>60</td>
+<td>1</td>
+<td>2025</td>
+<td>-2.342380</td>
+<td>-2.456621</td>
+<td>-80322.58</td>
+<td>-84402.58</td>
+<td>2.342380</td>
+<td>2.227685</td>
+<td>80322.58</td>
+<td>76242.58</td>
+<td>2.656250</td>
+<td>075_300</td>
+<td>060_1</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">568</th>
+<td>90</td>
+<td>300</td>
+<td>60</td>
+<td>2</td>
+<td>2025</td>
+<td>-2.544159</td>
+<td>-2.644552</td>
+<td>-78411.74</td>
+<td>-81603.74</td>
+<td>2.544159</td>
+<td>2.443511</td>
+<td>78411.74</td>
+<td>75219.74</td>
+<td>2.078125</td>
+<td>090_300</td>
+<td>060_2</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">567</th>
+<td>90</td>
+<td>300</td>
+<td>60</td>
+<td>1</td>
+<td>2025</td>
+<td>-2.488162</td>
+<td>-2.609492</td>
+<td>-79073.96</td>
+<td>-83105.96</td>
+<td>2.488162</td>
+<td>2.366302</td>
+<td>79073.96</td>
+<td>75041.96</td>
+<td>2.625000</td>
+<td>090_300</td>
+<td>060_1</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">345</th>
+<td>45</td>
+<td>240</td>
+<td>90</td>
+<td>1</td>
+<td>2025</td>
+<td>-3.013976</td>
+<td>-3.160166</td>
+<td>-79047.66</td>
+<td>-83079.66</td>
+<td>3.013976</td>
+<td>2.867064</td>
+<td>79047.66</td>
+<td>75015.66</td>
+<td>2.625000</td>
+<td>045_240</td>
+<td>090_1</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">498</th>
+<td>75</td>
+<td>300</td>
+<td>90</td>
+<td>1</td>
+<td>2025</td>
+<td>-2.669035</td>
+<td>-2.794202</td>
+<td>-77474.12</td>
+<td>-81242.12</td>
+<td>2.669035</td>
+<td>2.543438</td>
+<td>77474.12</td>
+<td>73706.12</td>
+<td>2.453125</td>
+<td>075_300</td>
+<td>090_1</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">354</th>
+<td>45</td>
+<td>300</td>
+<td>90</td>
+<td>1</td>
+<td>2025</td>
+<td>-2.674246</td>
+<td>-2.808143</td>
+<td>-76032.82</td>
+<td>-80016.82</td>
+<td>2.674246</td>
+<td>2.539738</td>
+<td>76032.82</td>
+<td>72048.82</td>
+<td>2.593750</td>
+<td>045_300</td>
+<td>090_1</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">561</th>
+<td>90</td>
+<td>240</td>
+<td>90</td>
+<td>1</td>
+<td>2025</td>
+<td>-2.650255</td>
+<td>-2.779796</td>
+<td>-70721.58</td>
+<td>-74321.58</td>
+<td>2.650255</td>
+<td>2.520194</td>
+<td>70721.58</td>
+<td>67121.58</td>
+<td>2.343750</td>
+<td>090_240</td>
+<td>090_1</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">423</th>
+<td>60</td>
+<td>300</td>
+<td>60</td>
+<td>1</td>
+<td>2025</td>
+<td>-2.237207</td>
+<td>-2.363755</td>
+<td>-71261.12</td>
+<td>-75461.12</td>
+<td>2.237207</td>
+<td>2.110075</td>
+<td>71261.12</td>
+<td>67061.12</td>
+<td>2.734375</td>
+<td>060_300</td>
+<td>060_1</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">136</th>
+<td>15</td>
+<td>300</td>
+<td>60</td>
+<td>2</td>
+<td>2025</td>
+<td>-2.294349</td>
+<td>-2.422291</td>
+<td>-68564.56</td>
+<td>-72548.56</td>
+<td>2.294349</td>
+<td>2.165826</td>
+<td>68564.56</td>
+<td>64580.56</td>
+<td>2.593750</td>
+<td>015_300</td>
+<td>060_2</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">569</th>
+<td>90</td>
+<td>300</td>
+<td>60</td>
+<td>3</td>
+<td>2025</td>
+<td>-2.308160</td>
+<td>-2.399189</td>
+<td>-66559.86</td>
+<td>-69223.86</td>
+<td>2.308160</td>
+<td>2.217012</td>
+<td>66559.86</td>
+<td>63895.86</td>
+<td>1.734375</td>
+<td>090_300</td>
+<td>060_3</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">416</th>
+<td>60</td>
+<td>240</td>
+<td>60</td>
+<td>3</td>
+<td>2025</td>
+<td>-2.322483</td>
+<td>-2.415665</td>
+<td>-66386.98</td>
+<td>-69098.98</td>
+<td>2.322483</td>
+<td>2.229150</td>
+<td>66386.98</td>
+<td>63674.98</td>
+<td>1.765625</td>
+<td>060_240</td>
+<td>060_3</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">64</th>
+<td>10</td>
+<td>300</td>
+<td>60</td>
+<td>2</td>
+<td>2025</td>
+<td>-1.889491</td>
+<td>-2.003600</td>
+<td>-67481.14</td>
+<td>-71681.14</td>
+<td>1.889491</td>
+<td>1.774973</td>
+<td>67481.14</td>
+<td>63281.14</td>
+<td>2.734375</td>
+<td>010_300</td>
+<td>060_2</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">550</th>
+<td>90</td>
+<td>200</td>
+<td>60</td>
+<td>2</td>
+<td>2025</td>
+<td>-2.306521</td>
+<td>-2.398716</td>
+<td>-65947.22</td>
+<td>-68635.22</td>
+<td>2.306521</td>
+<td>2.214164</td>
+<td>65947.22</td>
+<td>63259.22</td>
+<td>1.750000</td>
+<td>090_200</td>
+<td>060_2</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>To ascertain whether obtained results are good enough, comparison to pair-trading strategy will be conducted below.</p>
+</section>
+<section id="pair-trading-strategy" class="level3">
+<h3 class="anchored" data-anchor-id="pair-trading-strategy">Pair-trading strategy</h3>
+<p>For this segment, spread between NQ-SP quotations was calculated and 2 separate strategies were conducted (on ‘simple’ spread value and the volatility breakout model that accounts for certain standard deviation of spread oscillation).</p>
+<p>As one can observe not favourable results in terms of net Sharpe Ratio (plot depics the value of models with different combinations, using previously developped grid search mechanism), we will focus more on author’s improvements in terms of regression filtering.</p>
+<div id="91576edf" class="cell" data-execution_count="21">
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sample_presentation_revealjs_files/figure-html/cell-22-output-1.png" width="872" height="554" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<div id="0dd86d87" class="cell" data-execution_count="22">
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="sample_presentation_revealjs_files/figure-html/cell-23-output-1.png" width="899" height="554" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>As stated at the data analysis section, additional filtering based on linear regression could be beneficial for such strategies- it is also confirmed by positive correlation between pair of analyzed assets.</p>
+<div id="29f3a00b" class="cell" data-execution_count="23">
+<div class="cell-output cell-output-stdout">
+<pre><code>                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:                     SP   R-squared:                       0.976
+Model:                            OLS   Adj. R-squared:                  0.976
+Method:                 Least Squares   F-statistic:                 6.735e+06
+Date:                Sun, 18 Jan 2026   Prob (F-statistic):               0.00
+Time:                        19:07:02   Log-Likelihood:            -1.0248e+06
+No. Observations:              165985   AIC:                         2.050e+06
+Df Residuals:                  165983   BIC:                         2.050e+06
+Df Model:                           1                                         
+Covariance Type:            nonrobust                                         
+==============================================================================
+                 coef    std err          t      P&gt;|t|      [0.025      0.975]
+------------------------------------------------------------------------------
+const       1097.7632      1.570    699.191      0.000    1094.686    1100.840
+NQ             0.2269   8.74e-05   2595.192      0.000       0.227       0.227
+==============================================================================
+Omnibus:                     6474.144   Durbin-Watson:                   0.000
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):             4993.037
+Skew:                           0.337   Prob(JB):                         0.00
+Kurtosis:                       2.483   Cond. No.                     9.89e+04
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
+[2] The condition number is large, 9.89e+04. This might indicate that there are
+strong multicollinearity or other numerical problems.</code></pre>
+</div>
+</div>
+<p>Although proper filtering techniques based on linear regression greatly improve model performance regarding net SR (-0.75) and net P&amp;L (-48$), these results are much worse than these obtained for Volatility Breakout model that trades only on single Nasdaq futures asset.</p>
+<div id="d947b722" class="cell" data-execution_count="24">
+<div class="cell-output cell-output-display" data-execution_count="24">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">filter</th>
+<th data-quarto-table-cell-role="th">gross_SR</th>
+<th data-quarto-table-cell-role="th">net_SR</th>
+<th data-quarto-table-cell-role="th">gross_PnL</th>
+<th data-quarto-table-cell-role="th">net_PnL</th>
+<th data-quarto-table-cell-role="th">avg_n_trades_per_day</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">9</th>
+<td>filter_regression_price_beta_sig_above05</td>
+<td>-0.749164</td>
+<td>-0.749164</td>
+<td>-17.250825</td>
+<td>-48.831249</td>
+<td>0.004444</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">8</th>
+<td>filter_regression_price_beta_sig_above025</td>
+<td>0.991007</td>
+<td>-6.901138</td>
+<td>187.681475</td>
+<td>-2492.308367</td>
+<td>0.382222</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">3</th>
+<td>filter_correlation_prices_09</td>
+<td>0.657514</td>
+<td>-21.065465</td>
+<td>171.019949</td>
+<td>-9821.900839</td>
+<td>1.433333</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">2</th>
+<td>filter_correlation_prices_08</td>
+<td>0.865645</td>
+<td>-26.504891</td>
+<td>258.709084</td>
+<td>-11528.704853</td>
+<td>1.691111</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">6</th>
+<td>filter_correlation_returns_08</td>
+<td>0.688223</td>
+<td>-28.076650</td>
+<td>189.934557</td>
+<td>-11653.134860</td>
+<td>1.700000</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">12</th>
+<td>filter_regression_return_beta_sig_above05</td>
+<td>0.560998</td>
+<td>-28.910420</td>
+<td>153.243696</td>
+<td>-11881.572850</td>
+<td>1.726667</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">1</th>
+<td>filter_correlation_prices_07</td>
+<td>0.805824</td>
+<td>-29.465902</td>
+<td>248.408697</td>
+<td>-12191.380083</td>
+<td>1.784444</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">5</th>
+<td>filter_correlation_returns_07</td>
+<td>0.662841</td>
+<td>-30.195762</td>
+<td>185.535915</td>
+<td>-12092.006912</td>
+<td>1.762222</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">0</th>
+<td>filter_correlation_prices_06</td>
+<td>0.598289</td>
+<td>-31.512183</td>
+<td>188.861197</td>
+<td>-12624.884330</td>
+<td>1.837778</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">11</th>
+<td>filter_regression_return_beta_sig_above025</td>
+<td>0.936207</td>
+<td>-31.633913</td>
+<td>284.468710</td>
+<td>-12462.031658</td>
+<td>1.828889</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">4</th>
+<td>filter_correlation_returns_06</td>
+<td>0.568552</td>
+<td>-31.805449</td>
+<td>162.300093</td>
+<td>-12427.511840</td>
+<td>1.806667</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">10</th>
+<td>filter_regression_return_beta_sig_above0</td>
+<td>0.861445</td>
+<td>-34.383616</td>
+<td>269.689331</td>
+<td>-12914.991620</td>
+<td>1.891111</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">7</th>
+<td>filter_regression_price_beta_sig_above0</td>
+<td>0.976313</td>
+<td>-35.274254</td>
+<td>356.460689</td>
+<td>-13316.180362</td>
+<td>1.960000</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="finally-selected-strategy-for-group-1" class="level2">
+<h2 class="anchored" data-anchor-id="finally-selected-strategy-for-group-1">Finally selected strategy for <strong>group 1</strong></h2>
+<p>Finally, after comparison of different models and ‘hyperparameters’ by manual grid search mechanizm, by evaluation of performance on training and testing set and by comparison to pair-trading NQ-SP strategy, the author considers below strategy as best performing:</p>
+<p><strong>Strategy: Volatility Breakout model</strong></p>
+<section id="parameters-of-the-best-model" class="level3">
+<h3 class="anchored" data-anchor-id="parameters-of-the-best-model">Parameters of the best model</h3>
+<ul>
+<li>Asset: Nasdaq futures (single-asset based strategy)</li>
+<li>Type: momentum-based strategy</li>
+<li>Baseline: 2 intersecting EMAs (fast EMA10 + slow EMA120)</li>
+<li>volat_std: 120</li>
+<li>m: 2</li>
+</ul>
+<p>Below, author presents final results and metrics achieved by application of this strategy to full in-sample data.</p>
+</section>
+</section>
+<section id="summary-of-results-for-group-1" class="level2">
+<h2 class="anchored" data-anchor-id="summary-of-results-for-group-1">Summary of results for <strong>group 1</strong></h2>
+<div id="1de7b30a" class="cell" data-execution_count="25">
+<div class="cell-output cell-output-display" data-execution_count="25">
+<style type="text/css">
+#T_0450d th {
+  font-size: 20px;
+}
+#T_0450d td {
+  font-size: 20px;
+}
+#T_0450d_row0_col0, #T_0450d_row0_col1, #T_0450d_row0_col2, #T_0450d_row0_col3, #T_0450d_row0_col4, #T_0450d_row0_col5, #T_0450d_row0_col6, #T_0450d_row0_col7, #T_0450d_row0_col8, #T_0450d_row0_col9, #T_0450d_row0_col10, #T_0450d_row0_col11, #T_0450d_row0_col12, #T_0450d_row0_col13, #T_0450d_row0_col14, #T_0450d_row0_col15, #T_0450d_row0_col16, #T_0450d_row1_col0, #T_0450d_row1_col1, #T_0450d_row1_col2, #T_0450d_row1_col3, #T_0450d_row1_col4, #T_0450d_row1_col5, #T_0450d_row1_col6, #T_0450d_row1_col7, #T_0450d_row1_col8, #T_0450d_row1_col9, #T_0450d_row1_col10, #T_0450d_row1_col11, #T_0450d_row1_col12, #T_0450d_row1_col13, #T_0450d_row1_col14, #T_0450d_row1_col15, #T_0450d_row1_col16, #T_0450d_row2_col0, #T_0450d_row2_col1, #T_0450d_row2_col2, #T_0450d_row2_col3, #T_0450d_row2_col4, #T_0450d_row2_col5, #T_0450d_row2_col6, #T_0450d_row2_col7, #T_0450d_row2_col8, #T_0450d_row2_col9, #T_0450d_row2_col10, #T_0450d_row2_col11, #T_0450d_row2_col12, #T_0450d_row2_col13, #T_0450d_row2_col14, #T_0450d_row2_col15, #T_0450d_row2_col16, #T_0450d_row3_col0, #T_0450d_row3_col1, #T_0450d_row3_col2, #T_0450d_row3_col3, #T_0450d_row3_col4, #T_0450d_row3_col5, #T_0450d_row3_col6, #T_0450d_row3_col7, #T_0450d_row3_col8, #T_0450d_row3_col9, #T_0450d_row3_col10, #T_0450d_row3_col11, #T_0450d_row3_col12, #T_0450d_row3_col13, #T_0450d_row3_col14, #T_0450d_row3_col15, #T_0450d_row3_col16, #T_0450d_row4_col0, #T_0450d_row4_col1, #T_0450d_row4_col2, #T_0450d_row4_col3, #T_0450d_row4_col4, #T_0450d_row4_col5, #T_0450d_row4_col6, #T_0450d_row4_col7, #T_0450d_row4_col8, #T_0450d_row4_col9, #T_0450d_row4_col10, #T_0450d_row4_col11, #T_0450d_row4_col12, #T_0450d_row4_col13, #T_0450d_row4_col14, #T_0450d_row4_col15, #T_0450d_row4_col16, #T_0450d_row5_col0, #T_0450d_row5_col1, #T_0450d_row5_col2, #T_0450d_row5_col3, #T_0450d_row5_col4, #T_0450d_row5_col5, #T_0450d_row5_col6, #T_0450d_row5_col7, #T_0450d_row5_col8, #T_0450d_row5_col9, #T_0450d_row5_col10, #T_0450d_row5_col11, #T_0450d_row5_col12, #T_0450d_row5_col13, #T_0450d_row5_col14, #T_0450d_row5_col15, #T_0450d_row5_col16, #T_0450d_row6_col0, #T_0450d_row6_col1, #T_0450d_row6_col2, #T_0450d_row6_col3, #T_0450d_row6_col4, #T_0450d_row6_col5, #T_0450d_row6_col6, #T_0450d_row6_col7, #T_0450d_row6_col8, #T_0450d_row6_col9, #T_0450d_row6_col10, #T_0450d_row6_col11, #T_0450d_row6_col12, #T_0450d_row6_col13, #T_0450d_row6_col14, #T_0450d_row6_col15, #T_0450d_row6_col16 {
+  text-align: right;
+}
+</style>
+
+<table id="T_0450d" class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th id="T_0450d_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">quarter</th>
+<th id="T_0450d_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">gross_SR_NQ</th>
+<th id="T_0450d_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">net_SR_NQ</th>
+<th id="T_0450d_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">gross_PnL_NQ</th>
+<th id="T_0450d_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">net_PnL_NQ</th>
+<th id="T_0450d_level0_col5" class="col_heading level0 col5" data-quarto-table-cell-role="th">gross_CR_NQ</th>
+<th id="T_0450d_level0_col6" class="col_heading level0 col6" data-quarto-table-cell-role="th">net_CR_NQ</th>
+<th id="T_0450d_level0_col7" class="col_heading level0 col7" data-quarto-table-cell-role="th">av_daily_ntrans_NQ</th>
+<th id="T_0450d_level0_col8" class="col_heading level0 col8" data-quarto-table-cell-role="th">stat_NQ</th>
+<th id="T_0450d_level0_col9" class="col_heading level0 col9" data-quarto-table-cell-role="th">gross_SR_SP</th>
+<th id="T_0450d_level0_col10" class="col_heading level0 col10" data-quarto-table-cell-role="th">net_SR_SP</th>
+<th id="T_0450d_level0_col11" class="col_heading level0 col11" data-quarto-table-cell-role="th">gross_PnL_SP</th>
+<th id="T_0450d_level0_col12" class="col_heading level0 col12" data-quarto-table-cell-role="th">net_PnL_SP</th>
+<th id="T_0450d_level0_col13" class="col_heading level0 col13" data-quarto-table-cell-role="th">gross_CR_SP</th>
+<th id="T_0450d_level0_col14" class="col_heading level0 col14" data-quarto-table-cell-role="th">net_CR_SP</th>
+<th id="T_0450d_level0_col15" class="col_heading level0 col15" data-quarto-table-cell-role="th">av_daily_ntrans_SP</th>
+<th id="T_0450d_level0_col16" class="col_heading level0 col16" data-quarto-table-cell-role="th">stat_SP</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td id="T_0450d_row0_col0" class="data row0 col0">2023_Q1</td>
+<td id="T_0450d_row0_col1" class="data row0 col1">2.77</td>
+<td id="T_0450d_row0_col2" class="data row0 col2">2.26</td>
+<td id="T_0450d_row0_col3" class="data row0 col3">9093.80</td>
+<td id="T_0450d_row0_col4" class="data row0 col4">7437.80</td>
+<td id="T_0450d_row0_col5" class="data row0 col5">0.17</td>
+<td id="T_0450d_row0_col6" class="data row0 col6">0.14</td>
+<td id="T_0450d_row0_col7" class="data row0 col7">2.12</td>
+<td id="T_0450d_row0_col8" class="data row0 col8">3.53</td>
+<td id="T_0450d_row0_col9" class="data row0 col9">0.99</td>
+<td id="T_0450d_row0_col10" class="data row0 col10">0.01</td>
+<td id="T_0450d_row0_col11" class="data row0 col11">5288.90</td>
+<td id="T_0450d_row0_col12" class="data row0 col12">32.90</td>
+<td id="T_0450d_row0_col13" class="data row0 col13">0.06</td>
+<td id="T_0450d_row0_col14" class="data row0 col14">0.00</td>
+<td id="T_0450d_row0_col15" class="data row0 col15">6.74</td>
+<td id="T_0450d_row0_col16" class="data row0 col16">-0.00</td>
+</tr>
+<tr class="even">
+<td id="T_0450d_row1_col0" class="data row1 col0">2023_Q3</td>
+<td id="T_0450d_row1_col1" class="data row1 col1">2.33</td>
+<td id="T_0450d_row1_col2" class="data row1 col2">1.61</td>
+<td id="T_0450d_row1_col3" class="data row1 col3">4709.56</td>
+<td id="T_0450d_row1_col4" class="data row1 col4">3269.56</td>
+<td id="T_0450d_row1_col5" class="data row1 col5">0.15</td>
+<td id="T_0450d_row1_col6" class="data row1 col6">0.10</td>
+<td id="T_0450d_row1_col7" class="data row1 col7">1.85</td>
+<td id="T_0450d_row1_col8" class="data row1 col8">1.32</td>
+<td id="T_0450d_row1_col9" class="data row1 col9">-0.25</td>
+<td id="T_0450d_row1_col10" class="data row1 col10">-1.82</td>
+<td id="T_0450d_row1_col11" class="data row1 col11">-793.40</td>
+<td id="T_0450d_row1_col12" class="data row1 col12">-5953.40</td>
+<td id="T_0450d_row1_col13" class="data row1 col13">-0.02</td>
+<td id="T_0450d_row1_col14" class="data row1 col14">-0.11</td>
+<td id="T_0450d_row1_col15" class="data row1 col15">6.62</td>
+<td id="T_0450d_row1_col16" class="data row1 col16">-4.13</td>
+</tr>
+<tr class="odd">
+<td id="T_0450d_row2_col0" class="data row2 col0">2023_Q4</td>
+<td id="T_0450d_row2_col1" class="data row2 col1">2.69</td>
+<td id="T_0450d_row2_col2" class="data row2 col2">2.17</td>
+<td id="T_0450d_row2_col3" class="data row2 col3">5145.68</td>
+<td id="T_0450d_row2_col4" class="data row2 col4">4137.68</td>
+<td id="T_0450d_row2_col5" class="data row2 col5">0.17</td>
+<td id="T_0450d_row2_col6" class="data row2 col6">0.14</td>
+<td id="T_0450d_row2_col7" class="data row2 col7">1.31</td>
+<td id="T_0450d_row2_col8" class="data row2 col8">2.37</td>
+<td id="T_0450d_row2_col9" class="data row2 col9">2.72</td>
+<td id="T_0450d_row2_col10" class="data row2 col10">1.26</td>
+<td id="T_0450d_row2_col11" class="data row2 col11">8944.45</td>
+<td id="T_0450d_row2_col12" class="data row2 col12">4240.45</td>
+<td id="T_0450d_row2_col13" class="data row2 col13">0.17</td>
+<td id="T_0450d_row2_col14" class="data row2 col14">0.08</td>
+<td id="T_0450d_row2_col15" class="data row2 col15">6.12</td>
+<td id="T_0450d_row2_col16" class="data row2 col16">1.10</td>
+</tr>
+<tr class="even">
+<td id="T_0450d_row3_col0" class="data row3 col0">2024_Q2</td>
+<td id="T_0450d_row3_col1" class="data row3 col1">1.78</td>
+<td id="T_0450d_row3_col2" class="data row3 col2">0.92</td>
+<td id="T_0450d_row3_col3" class="data row3 col3">2652.44</td>
+<td id="T_0450d_row3_col4" class="data row3 col4">1356.44</td>
+<td id="T_0450d_row3_col5" class="data row3 col5">0.11</td>
+<td id="T_0450d_row3_col6" class="data row3 col6">0.06</td>
+<td id="T_0450d_row3_col7" class="data row3 col7">1.66</td>
+<td id="T_0450d_row3_col8" class="data row3 col8">0.13</td>
+<td id="T_0450d_row3_col9" class="data row3 col9">1.45</td>
+<td id="T_0450d_row3_col10" class="data row3 col10">0.28</td>
+<td id="T_0450d_row3_col11" class="data row3 col11">6159.75</td>
+<td id="T_0450d_row3_col12" class="data row3 col12">1215.75</td>
+<td id="T_0450d_row3_col13" class="data row3 col13">0.09</td>
+<td id="T_0450d_row3_col14" class="data row3 col14">0.02</td>
+<td id="T_0450d_row3_col15" class="data row3 col15">6.34</td>
+<td id="T_0450d_row3_col16" class="data row3 col16">-0.04</td>
+</tr>
+<tr class="odd">
+<td id="T_0450d_row4_col0" class="data row4 col0">2024_Q4</td>
+<td id="T_0450d_row4_col1" class="data row4 col1">-1.16</td>
+<td id="T_0450d_row4_col2" class="data row4 col2">-1.99</td>
+<td id="T_0450d_row4_col3" class="data row4 col3">-1891.20</td>
+<td id="T_0450d_row4_col4" class="data row4 col4">-3283.20</td>
+<td id="T_0450d_row4_col5" class="data row4 col5">-0.07</td>
+<td id="T_0450d_row4_col6" class="data row4 col6">-0.12</td>
+<td id="T_0450d_row4_col7" class="data row4 col7">1.78</td>
+<td id="T_0450d_row4_col8" class="data row4 col8">-2.96</td>
+<td id="T_0450d_row4_col9" class="data row4 col9">0.77</td>
+<td id="T_0450d_row4_col10" class="data row4 col10">-0.35</td>
+<td id="T_0450d_row4_col11" class="data row4 col11">3450.65</td>
+<td id="T_0450d_row4_col12" class="data row4 col12">-1613.35</td>
+<td id="T_0450d_row4_col13" class="data row4 col13">0.05</td>
+<td id="T_0450d_row4_col14" class="data row4 col14">-0.02</td>
+<td id="T_0450d_row4_col15" class="data row4 col15">6.49</td>
+<td id="T_0450d_row4_col16" class="data row4 col16">-0.41</td>
+</tr>
+<tr class="even">
+<td id="T_0450d_row5_col0" class="data row5 col0">2025_Q1</td>
+<td id="T_0450d_row5_col1" class="data row5 col1">1.80</td>
+<td id="T_0450d_row5_col2" class="data row5 col2">1.45</td>
+<td id="T_0450d_row5_col3" class="data row5 col3">5900.68</td>
+<td id="T_0450d_row5_col4" class="data row5 col4">4748.68</td>
+<td id="T_0450d_row5_col5" class="data row5 col5">0.11</td>
+<td id="T_0450d_row5_col6" class="data row5 col6">0.09</td>
+<td id="T_0450d_row5_col7" class="data row5 col7">1.52</td>
+<td id="T_0450d_row5_col8" class="data row5 col8">1.48</td>
+<td id="T_0450d_row5_col9" class="data row5 col9">-0.11</td>
+<td id="T_0450d_row5_col10" class="data row5 col10">-1.16</td>
+<td id="T_0450d_row5_col11" class="data row5 col11">-490.05</td>
+<td id="T_0450d_row5_col12" class="data row5 col12">-5434.05</td>
+<td id="T_0450d_row5_col13" class="data row5 col13">-0.01</td>
+<td id="T_0450d_row5_col14" class="data row5 col14">-0.07</td>
+<td id="T_0450d_row5_col15" class="data row5 col15">6.54</td>
+<td id="T_0450d_row5_col16" class="data row5 col16">-2.82</td>
+</tr>
+<tr class="odd">
+<td id="T_0450d_row6_col0" class="data row6 col0">2025_Q2</td>
+<td id="T_0450d_row6_col1" class="data row6 col1">3.33</td>
+<td id="T_0450d_row6_col2" class="data row6 col2">3.04</td>
+<td id="T_0450d_row6_col3" class="data row6 col3">14757.04</td>
+<td id="T_0450d_row6_col4" class="data row6 col4">13413.04</td>
+<td id="T_0450d_row6_col5" class="data row6 col5">0.21</td>
+<td id="T_0450d_row6_col6" class="data row6 col6">0.19</td>
+<td id="T_0450d_row6_col7" class="data row6 col7">1.72</td>
+<td id="T_0450d_row6_col8" class="data row6 col8">6.58</td>
+<td id="T_0450d_row6_col9" class="data row6 col9">0.25</td>
+<td id="T_0450d_row6_col10" class="data row6 col10">-0.20</td>
+<td id="T_0450d_row6_col11" class="data row6 col11">2755.55</td>
+<td id="T_0450d_row6_col12" class="data row6 col12">-2164.45</td>
+<td id="T_0450d_row6_col13" class="data row6 col13">0.02</td>
+<td id="T_0450d_row6_col14" class="data row6 col14">-0.01</td>
+<td id="T_0450d_row6_col15" class="data row6 col15">6.31</td>
+<td id="T_0450d_row6_col16" class="data row6 col16">-0.54</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>This table also shows the results of best-performing Volatility breakout model for S&amp;P500 futures (with different hyperparameters and configuration, selected by applying same procedure) but it performs much worse- we’ll omit the explanation of these results and focus on ‘Nasdaq-based’ strategy.</p>
+<p>From early 2023 through mid-2025, the net Sharpe ratio of the strategy remains mostly above 1.5 and frequently exceeds 2.0, indicating a high return per unit of risk. In particular, the first quarter of 2023 and the fourth quarter of 2023 show net Sharpe ratios above 2, confirming that the profitability observed in these periods is statistically meaningful rather than the result of random fluctuations.</p>
+<p>Transaction costs reduce performance, as expected, but they do not undermine the economic viability of the strategy. The gap between gross and net Sharpe ratios is moderate and stable across quarters, suggesting that the trading frequency is well-controlled. On average, the strategy executes between one and two trades per day, which is low enough to remain robust to realistic transaction costs while still actively exploiting intraday price movements.</p>
+<p>Net profit figures reinforce the Sharpe ratio results. The strategy produces positive net PnL in six out of seven quarters, with particularly strong profitability in 2023_Q1, 2023_Q4, 2025_Q1, and especially 2025_Q2. Even in weaker periods such as 2024_Q2, the strategy remains marginally profitable, indicating reduced opportunity rather than structural failure.</p>
+<p>Overall, the NASDAQ volatility breakout strategy exhibits robust and economically meaningful performance across multiple years, with high risk-adjusted returns, stable trading intensity, and strong profitability after transaction costs. Its primary weakness lies in its sensitivity to specific market regimes, particularly those unfavorable to momentum-based trading. Nevertheless, given its strong average performance and clear identification of failure regimes, the strategy provides a solid foundation for further refinement and risk-control enhancements, such as volatility filters or introduction of stop-loss mechanism.</p>
+</section>
+<section id="equity-line-for-group-1-2023q1" class="level2">
+<h2 class="anchored" data-anchor-id="equity-line-for-group-1-2023q1">Equity line for <strong>group 1</strong> – 2023Q1</h2>
+<div id="437a8fea" class="cell" data-execution_count="26">
+<div class="cell-output cell-output-display" data-execution_count="26">
+<div>
+<figure class="figure">
+<p><img src="sample_presentation_revealjs_files/figure-html/cell-27-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Key observations regarding performance (Strong Gain): net_PnL started flat, followed by a major “V-shaped” recovery in March. Finished with a Net PnL of ~$7,500.</p>
+</section>
+<section id="equity-line-for-group-1-2023q3" class="level2">
+<h2 class="anchored" data-anchor-id="equity-line-for-group-1-2023q3">Equity line for <strong>group 1</strong> – 2023Q3</h2>
+<div id="4ef012e9" class="cell" data-execution_count="27">
+<div class="cell-output cell-output-display" data-execution_count="27">
+<div>
+<figure class="figure">
+<p><img src="sample_presentation_revealjs_files/figure-html/cell-28-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Key observations regarding performance (Moderate Gain): High volatility in July followed by a long plateau in August. Ended the quarter positively with a Net PnL of ~$3,300.</p>
+</section>
+<section id="equity-line-for-group-1-2023q4" class="level2">
+<h2 class="anchored" data-anchor-id="equity-line-for-group-1-2023q4">Equity line for <strong>group 1</strong> – 2023Q4</h2>
+<div id="c71cd4ca" class="cell" data-execution_count="28">
+<div class="cell-output cell-output-display" data-execution_count="28">
+<div>
+<figure class="figure">
+<p><img src="sample_presentation_revealjs_files/figure-html/cell-29-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Key observations regarding performance (Strong Late Surge): The strategy was largely breakeven for the first two months. A massive “parabolic” move in mid-December drove Net_PnL to ~$4,100 level</p>
+</section>
+<section id="equity-line-for-group-1-2024q2" class="level2">
+<h2 class="anchored" data-anchor-id="equity-line-for-group-1-2024q2">Equity line for <strong>group 1</strong> – 2024Q2</h2>
+<div id="392ed691" class="cell" data-execution_count="29">
+<div class="cell-output cell-output-display" data-execution_count="29">
+<div>
+<figure class="figure">
+<p><img src="sample_presentation_revealjs_files/figure-html/cell-30-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Key observations regarding performance (Moderate Growth with Drawdown): The strategy showed steady growth through April and May, peaking at nearly $4,000 Net_PnL. However, warning signal in form of significant sharp drawdown occurred in late June, wiping out about 50% of the quarter’s gains, ending around $1,400 Net_PnL.</p>
+</section>
+<section id="equity-line-for-group-1-2024q4" class="level2">
+<h2 class="anchored" data-anchor-id="equity-line-for-group-1-2024q4">Equity line for <strong>group 1</strong> – 2024Q4</h2>
+<div id="8f43ac3e" class="cell" data-execution_count="30">
+<div class="cell-output cell-output-display" data-execution_count="30">
+<div>
+<figure class="figure">
+<p><img src="sample_presentation_revealjs_files/figure-html/cell-31-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Key observations regarding performance (Significant Loss): This was the worst-performing period in the set- after a brief positive start in early October, the strategy entered a sustained downward trend. Final Result: Finished deep ‘in the red’ with a Net_PnL of approx -$3,200.</p>
+</section>
+<section id="equity-line-for-group-1-2025q1" class="level2">
+<h2 class="anchored" data-anchor-id="equity-line-for-group-1-2025q1">Equity line for <strong>group 1</strong> – 2025Q1</h2>
+<div id="28278a7f" class="cell" data-execution_count="31">
+<div class="cell-output cell-output-display" data-execution_count="31">
+<div>
+<figure class="figure">
+<p><img src="sample_presentation_revealjs_files/figure-html/cell-32-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Key observations regarding performance (‘High Risk, High Reward’): This quarter was characterized by massive swings. A major dip in February saw Net_PnL drop to $1,500 before a massive surge in March. Final Result: Despite a late March pullback, it ended strongly at approx $4,800 Net_PnL level</p>
+</section>
+<section id="equity-line-for-group-1-2025q2" class="level2">
+<h2 class="anchored" data-anchor-id="equity-line-for-group-1-2025q2">Equity line for <strong>group 1</strong> – 2025Q2</h2>
+<div id="2112d76e" class="cell" data-execution_count="32">
+<div class="cell-output cell-output-display" data-execution_count="32">
+<div>
+<figure class="figure">
+<p><img src="sample_presentation_revealjs_files/figure-html/cell-33-output-1.png" class="img-fluid figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Key observations regarding performance (Exceptional Growth) This is the “star” performer of the dataset. A massive jump in mid-April set a new baseline. The strategy showed excellent “step-stair” growth, meaning it would surge and then hold its gains (consolidate) rather than giving them back. Final Result: Ended at an all-time high for these charts, near $13,400 Net.</p>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
