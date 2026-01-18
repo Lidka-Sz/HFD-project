@@ -9,21 +9,173 @@ format: revealjs
 
 ## Approaches undertaken
 
-This part should describe **in short** what particular methods you used, all entry/exit techniques considered, all additional assumptions.
+The dataset for **Group 2** consists of high-frequency, 5-minute intraday quotations for FX and precious metals futures:
 
-For **each group of assets separately** You should also explain **WHAT different parameters** you considered (e.g. memories of moving averages, types of moving averages, types of volatility measures, memory of volatility measures, types of additional indicators, memories of additional indicators, etc.), what (if any) additional filtering rules you applied.
+- **CAD** – futures contract for Canadian dollar (transaction cost = 10$, point value = 100,000$)  
+- **AUD** – futures contract for Australian dollar (transaction cost = 10$, point value = 100,000$)  
+- **XAU** – futures contract for gold (transaction cost = 15$, point value = 100$)  
+- **XAG** – futures contract for silver (transaction cost = 10$, point value = 5,000$)  
 
-You should also explain with details **HOW** you searched for the best combination of parameters for a particular group of assets.
+Covering the period from **January 2023 through June 2025** (7 quarters of in-sample data).
+
+All strategies are implemented under the following intraday assumptions:
+
+- Positions are closed 10 minutes before session end  
+- No trades are executed during the first few minutes of the session  
+- Early periods are still used for **signal generation, volatility calibration, and indicator calculation**  
+- Positions for each strategy are restricted to:  
+  - Flat (**0**) – no exposure  
+  - Long (**+1**) – buy one unit  
+  - Short (**-1**) – sell one unit  
+
+Before selecting the final trading strategy for Group 2 assets, several candidate approaches were tested:
+
+- **Single-asset strategies** – applied individually to CAD, AUD, XAU, XAG  
+- **Pairs trading strategies** – long-short combinations between two assets  
+- **Portfolio-based strategies** – signals aggregated across the group  
+
+For each candidate strategy, multiple entry/exit techniques and assumptions were considered:
+
+- **Momentum-based vs mean-reversion approaches**  
+- **Simple Moving Average (SMA) and Exponential Moving Average (EMA) crossovers**  
+- **Volatility breakout models** with different memory lengths  
+- **Minimum holding periods, trend filters, and volatility scaling**  
+- **Intraday trading constraints** (flat before 9:55, exit before breaks, etc.)  
+
+A systematic **grid search** was carried out for all candidate strategies across all assets in Group 2. This allowed us to test a wide range of parameter combinations and identify the most robust setups.
+
+| **Parameter**                 | **Tested Values**                     | **Purpose**                                      |
+|--------------------------------|-------------------------------------|-------------------------------------------------|
+| **Rolling window (`win`)**      | 12, 24, 48, 64, 72, 96              | Memory for moving averages, volatility, or breakout thresholds |
+| **Z-score / threshold (`z`)**   | 0.5, 0.625, 0.675, 0.7, 1.0        | Determines strength of deviation for mean-reversion or breakout entry |
+| **Minimum hold (`hold_min`)**   | 1, 2, 3, 4, 5                        | Enforces minimal holding period per trade      |
+| **Trend EMA span (`trend_span`)** | 50, 100, 120, 140                  | Filters trades aligned with broader trend     |
+| **Volatility cap (`vol_cap`)**   | 4, 6, 8, 10                          | Limits position size in volatile periods      |
+| **Hard stop multiplier (`stop_mult`)** | 1.5, 2.0, 2.5, 3.0           | Stops positions if cumulative PnL exceeds threshold |
+
+The search for the **best combination of parameters** was conducted by iteratively testing each strategy, calculating **daily aggregated PnL**, and evaluating:
+
+- **Gross Sharpe ratio** – annualized, monetary terms, before transaction costs  
+- **Net Sharpe ratio** – annualized, monetary terms, after transaction costs  
+- **Gross and Net Calmar ratios**  
+- **Cumulative PnL** – gross and net  
+- **Average daily number of trades**  
+
+The strategies producing the **highest net PnL and net SR**, along with the **highest summary statistic**, were then further refined using:
+
+- Volatility scaling adjustments  
+- Trend filters  
+- Minimum holding periods  
 
 
-## Finally selected strategy for **group 1**
+## Finally selected strategy for Group 2
 
-Provide a **general summary** (approach and a set of **final parameters**) for assets from **group 1**.
-(e.g. momentum strategy, cross over of two exponential moving averages EMA10 and EMA60).
+### Strategy overview
 
+After testing a wide range of trading approaches across all Group 2 assets (CAD, AUD, XAU, XAG), the final selected strategy is a **single-asset mean-reversion strategy applied to Silver futures (XAG)**.
 
-<!-- here you can include code chunk that applies the strategy for group 1 and calculates all the summary statistics
--->
+The strategy is designed to exploit **short-term price deviations from a local equilibrium**, under the assumption that XAG prices exhibit **temporary overreaction** followed by reversion, especially during intraday trading hours. Compared to FX futures in this group, XAG displayed stronger and more stable mean-reverting behavior, as well as superior performance in terms of net Sharpe ratio, net P&L, and the project summary statistic.
+
+---
+
+### Strategy logic
+
+The core signal is based on a **rolling z-score of prices**:
+
+- A rolling mean and standard deviation are computed over a fixed window  
+- The current price deviation from the rolling mean is standardized  
+- Positions are opened when the deviation exceeds a predefined threshold  
+
+The strategy takes:
+- **Short positions** when the price is sufficiently above its rolling mean  
+- **Long positions** when the price is sufficiently below its rolling mean  
+
+No position is taken when the price remains close to its rolling average.
+
+---
+
+### Entry and exit rules
+
+- **Entry**:
+  - Long (+1) if z-score < −z  
+  - Short (−1) if z-score > +z  
+
+- **Exit**:
+  - Positions naturally revert to zero when the z-score moves back toward equilibrium
+  - Additional exits are enforced by intraday constraints and risk controls
+
+This structure ensures frequent but controlled trading, consistent with intraday mean-reversion behavior.
+
+---
+
+### Additional filters and assumptions
+
+To improve robustness and reduce adverse market regimes, several additional layers were applied:
+
+- **Trend filter**  
+  - A slow EMA is used to filter trades:
+    - Long trades are avoided in strong downtrends  
+    - Short trades are avoided in strong uptrends  
+
+- **Minimum holding period**  
+  - A minimum number of bars is enforced to reduce excessive turnover and micro-noise  
+
+- **Volatility scaling (soft filter)**  
+  - Position sizes are inversely scaled by recent volatility  
+  - A volatility cap limits exposure during high-volatility periods  
+
+- **Hard stop-loss with cooldown**  
+  - Positions are force-closed if cumulative losses exceed a volatility-based threshold  
+  - A short cooldown period prevents immediate re-entry after a stop event  
+
+- **Intraday trading constraints**  
+  - No positions are held during predefined non-trading intervals  
+  - Positions are closed before session breaks and end-of-day  
+  - Early session data is still used for signal and volatility estimation  
+
+All positions are restricted to **−1, 0, or +1**, assuming trading in **one contract only**.
+
+---
+## Final Strategy Specification — Group 2 
+| **Component**                         | **Specification / Value**                                                    |
+|--------------------------------------|------------------------------------------------------------------------------|
+| **Asset traded**                     | Silver Futures (**XAG**)                                                     |
+| **Point value**                      | 5,000 USD per contract                                                       |
+| **Transaction cost**                 | 10 USD per trade                                                             |
+| **Core signal type**                 | Intraday **mean-reversion** based on rolling z-score                         |
+| **Rolling window (`win`)**           | **64** bars (≈ 5 hours of 5-min data)                                        |
+| **Z-score threshold (`z`)**          | **0.675** standard deviations                                                |
+| **Position states**                  | Long (+1), Flat (0), Short (-1)                                              |
+| **Trend filter (EMA)**               | **EMA span = 100** (trend ignored for opposing-trend trades)                 |
+| **Minimum holding period**           | **3 bars** (~15 minutes)                                                     |
+| **Soft volatility scaling**          | Position scaled by 1 / volatility                                            |
+| **Volatility cap (`vol_cap`)**       | **6×** — limits exposure during high vol                                     |
+| **Hard stop-loss rule**              | Stop if cumulative intraday loss > **2× recent vol**                         |
+| **Hard stop cooldown**               | **2 bars** (no immediate re-entry)                                           |
+| **Intraday session rules**           | Flat 10 minutes before break & first 10 minutes after restart                |
+| **Position sizing**                  | Single contract scaled by volatility (no leverage)                           |
+| **Trading horizon**                  | Intraday only (no overnight exposure)                                        |
+| **Signal update frequency**          | Every **5 minutes**                                                           |
+| **Dataset timeframe**                | 7 quarters: Jan 2023 – Jun 2025                                              |
+
+---
+### Parameter selection and optimization
+
+The final parameter set was selected through a **systematic grid search**, conducted for:
+
+- All candidate strategies  
+- All Group 2 assets  
+- Multiple quarters of in-sample data  
+
+For each parameter combination, performance was evaluated using:
+
+- Daily aggregated gross and net P&L (in monetary terms)  
+- Annualized gross and net Sharpe ratios  
+- Gross and net Calmar ratios  
+- Average daily number of trades  
+- The project-defined summary statistic  
+
+The XAG mean-reversion strategy consistently outperformed alternative strategies (momentum, breakouts, pairs, and portfolio-based approaches), particularly after accounting for transaction costs.
 
 ```{python}
 #|echo: false
@@ -33,9 +185,7 @@ import runpy
 runpy.run_path("final_strategy_group2_assets.py")
 ```
 
-
-
-## Summary of results for **group 1**
+## Summary of results for **group 2**
 
 ```{python}
 #| echo: false
@@ -60,9 +210,11 @@ styled_table = (
 styled_table
 ```
 
-your comments required !!!
+The performance of the champion strategy varies across quarters, reflecting changing intraday market conditions and volatility regimes. Overall, the strategy demonstrates strong profitability and risk-adjusted performance in most periods, with a positive aggregate summary statistic.
+- The strategy achieves substantial positive net P&L in most quarters, peaking at over $105k in 2025 Q1, while losses remain limited to two quarters.
+- The average daily number of trades remains relatively stable across quarters (approximately 78–88 trades per day), indicating that performance differences are driven primarily by market regime changes, not by excessive turnover.
 
-## Equity line for **group 1** -- 2023Q1
+## Equity line for **group 2** -- 2023Q1
 
 ```{python}
 #| echo: false
@@ -71,9 +223,13 @@ from IPython.display import Image
 Image(filename="data2_2023_Q1.png")
 ```
 
-your comments required !!!
+- Gross PnL trends upward over the quarter, finishing clearly positive.
+- Net PnL trends downward almost monotonically, ending deeply negative.
+- The gap between gross and net widens steadily.
+- The mean-reversion signal itself works: price reversals are correctly identified.
+- Very high turnover (confirmed by ~81 trades/day) completely erodes profitability.
 
-## Equity line for **group 1** -- 2023Q3
+## Equity line for **group 2** -- 2023Q3
 
 ```{python}
 #| echo: false
@@ -82,9 +238,15 @@ from IPython.display import Image
 Image(filename="data2_2023_Q3.png")
 ```
 
-your comments required !!!
+- Both gross and net PnL trend upward.
+- Net PnL closely follows gross PnL with limited drawdowns.
+- The gap between curves is stable, not expanding.
+- Mean-reversion dynamics are persistent and clean.
+- Price deviations revert smoothly, allowing trades to run longer.
+- Transaction costs are absorbed by sufficiently large price moves.
+- Temporary drawdowns (mid-quarter) are recovered quickly.
 
-## Equity line for **group 1** -- 2023Q4
+## Equity line for **group 2** -- 2023Q4
 
 ```{python}
 #| echo: false
@@ -93,8 +255,12 @@ from IPython.display import Image
 Image(filename="data2_2023_Q4.png")
 ```
 
-your comments required !!!
-
+- Gross PnL increases steadily throughout the quarter.
+- Net PnL is positive but exhibits larger drawdowns and plateaus.
+- A visible mid-quarter net drawdown not mirrored in gross PnL.
+- The signal remains strong, but market microstructure worsens: choppier price action partial reversals, increased stop-outs.
+- Execution frictions matter more than in Q3.
+- Recovery toward quarter end shows the strategy still adapts.
 
 ## Equity line for **group 1** -- 2024Q2
 
@@ -105,9 +271,13 @@ from IPython.display import Image
 Image(filename="data2_2024_Q2.png")
 ```
 
-your comments required !!!
-
-## Equity line for **group 1** -- 2024Q4
+- Gross and net PnL both trend consistently higher.
+- Early drawdown quickly reverses.
+- Mean-reversion is very effective this quarter;price dislocations are large enough to trigger entries, and cleanly revert toward the mean.
+- Net curve tracks the gross curve closely: signal quality is high, transaction costs are absorbed.
+- Volatility is moderate, volatility scaling boosts returns without choking position size.
+- Hard stops rarely trigger, therefore there are no long cooldown gaps.
+## Equity line for **group 2** -- 2024Q4
 
 ```{python}
 #| echo: false
@@ -115,9 +285,15 @@ your comments required !!!
 from IPython.display import Image
 Image(filename="data2_2024_Q4.png")
 ```
-your comments required !!!
 
-## Equity line for **group 1** -- 2025Q1
+- gross PnL stagnates or mildly decays through mid-quarter.
+- Persistent widening gap between gross and net PnL.
+- This quarter shows a structural breakdown in mean-reversion, price moves start to drift away instead of coming back, entries are triggered, but reversions fail.
+- The large and widening gap between gross and net means, that trade frequency likely remains high, but trade expectancy becomes negative.
+- Increasing chop leads to more stop-outs, leading to cooldowns and lost opportunities.
+- Trend filter likely offers limited relief because chop quickly whipsaws across the EMA.
+
+## Equity line for **group 2** -- 2025Q1
 
 ```{python}
 #| echo: false
@@ -125,9 +301,14 @@ your comments required !!!
 from IPython.display import Image
 Image(filename="data2_2025_Q1.png")
 ```
-your comments required !!!
 
-## Equity line for **group 1** -- 2025Q2
+- Nearly monotonic climb in both gross and net PnL.
+- Small drawdowns and quick recoveries.
+- Deviations are frequent and large enough to justify entering.
+- Reversions are swift, which leads trades realize their expected return.
+- Trade size likely increases due to volatility scaling early in the quarter.
+- Very few disruptive hard-stop events — model stays in sync with flow.
+## Equity line for **group 2** -- 2025Q2
 
 ```{python}
 #| echo: false
@@ -136,13 +317,13 @@ from IPython.display import Image
 Image(filename="data2_2025_Q2.png")
 ```
 
-your comments required !!!
-
-## Summary of results for **group 2**
-
-AND OF COURSE YOU SHOULD INCLUDE A SIMILAR SUMMARY TABLE, FIGURES AND COMMENTS FOR THE STRATEGY BASED ON **THE SECOND GROUP OF ASSETS**
-
+- Gross PnL trends strongly upward over the quarter, ending clearly positive.
+- Net PnL also remains positive but lags gross PnL substantially.
+- A pronounced mid-quarter drawdown affects both curves, indicating a temporary breakdown of mean-reversion.
+- The widening gap between gross and net PnL highlights the impact of transaction costs and stop-induced turnover.
+- Late-quarter recovery shows mean-reversion dynamics re-emerge and remain profitable.
+- Overall, the signal remains robust, but execution frictions and choppy regimes reduce net efficiency relative to gross performance.
 
 ## Summary and conclusions
 
-Here you should include a summary of obtained results and some general conclusions.
+The intraday mean-reversion strategy on Silver futures (XAG) produces positive net results in most of the analysed quarters, with profits mainly coming from short-term price moves that revert rather than from longer directional trends. The fact that performance changes from quarter to quarter does not appear to be driven by unstable parameters or an excessive number of trades, but instead by shifts in market conditions. In particular, periods with strong trends or very choppy price action tend to reduce the effectiveness of the strategy. Looking at gross versus net PnL highlights how important transaction costs and execution effects are in a high-frequency setting: even when the signal itself remains profitable, higher turnover and more frequent stop-outs can significantly reduce net returns. At the same time, the additional filters and risk controls play an important role in limiting drawdowns and preventing larger losses, even if this sometimes comes at the cost of lower profitability. Overall, the results show that relatively simple mean-reversion ideas can still work in intraday markets, but only when risk management and trading constraints are carefully integrated into the strategy design.
